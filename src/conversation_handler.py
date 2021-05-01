@@ -1,2 +1,2 @@
-def reply(text):
-    return(f"yo you said {text}")
+class States():
+    COMMANDS = 0

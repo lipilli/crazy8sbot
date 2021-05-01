@@ -6,7 +6,7 @@
 
 * Standard 52-card pack
 * 2-5 players
-* Goal: get the least points
+* Goal: get the least 100 points
 * The player to get rid of all their cards first, wins the round
 
 
@@ -18,7 +18,7 @@ The player who is the first to have no cards left wins the game. The  winning pl
 * Each eight = 50 points
 * Each K, Q, J or 10 = 10 points
 * Each ace = 1 point
-* Each other card is the pip value
+* Each other card is the according value
 
 
 
