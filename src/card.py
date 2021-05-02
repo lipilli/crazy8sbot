@@ -10,7 +10,7 @@ class Card:
         So for example: ♠1♥1♣1♦1♠2♥2♣2♦2♠3♥3..."""
         self.value = value
 
-    def get_text(self):
+    def __str__(self):
         suit = self.suits[self.value % 4]
         rank = int((self.value - self.value % 4) / 4 + 2)
 
@@ -24,5 +24,8 @@ class Card:
             rank = "A"
 
         return f"{suit}{rank}"
+    
+    def __int__(self):
+        return self.value
 
 # %%
