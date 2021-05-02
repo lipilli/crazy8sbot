@@ -11,8 +11,8 @@ class Card:
         self.value = value
 
     def __str__(self):
-        suit = self.suits[self.value % 4]
-        rank = int((self.value - self.value % 4) / 4 + 2)
+        suit = self.get_suit()
+        rank = self.get_rank()
 
         if rank == 11:
             rank = "J"
@@ -27,5 +27,10 @@ class Card:
     
     def __int__(self):
         return self.value
+    
+    def get_suit(self):
+        return self.suits[self.value % 4]
 
+    def get_rank(self):
+        return int((self.value - self.value % 4) / 4 + 2)
 # %%
