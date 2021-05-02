@@ -5,3 +5,4 @@ conversationhandler_coronabot.py
 cards_img*
 .idea*
 bot.log
+.vscode/
