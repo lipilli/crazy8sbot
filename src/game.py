@@ -47,7 +47,12 @@ class Game:
     def get_score(self, player):
         return 21
     
-    def deal_cards(self):
-        return True
+    def draw(self, player):
+        if len(deck) > 0:
+            card = self.deck.pop()
+            self.hands[player].add(card)
+            return True
+        else:
+            return False
 
 # %%
