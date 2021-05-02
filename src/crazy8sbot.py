@@ -11,7 +11,10 @@ import logging
 
 # custom modules
 import constants as const
-import conversation_handler as ch
+from conversesation import States
+from conversesation import Messages
+from conversesation import Keyboards
+
 # setup logging
 # source: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Extensions-%E2%80%93-Your-first-Bot
 logging.basicConfig(filename="bot.log", format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -24,60 +27,27 @@ logging.basicConfig(filename="bot.log", format='%(asctime)s - %(name)s - %(level
 # TODO: score
 # TODO: create 2 extrabots
 
-messages = {
-    'rules': """Here are the rules: 
-     - Every card (other than eight) you play must match the suit or denomination of the card on the deck 
-     - The eights are crazy! Play it at anytime and define a new suit. The next player must play an eight or a card of matching suit
-     - If you can't play, draw cards until you can play
-     - If there is no card on the deck
-     - If the deck is empty and you can't play you are passed""",
-    'rules_long': """Crazy 8s:
-        General:
-        - Goal: get more then 100 points
-        - Players: 2-5
-        - The player to get rid of all their cards first, wins the round
-        
-        Card values:
-        - 8 = 50 points
-        - K, Q, J or 10 = 10 points
-        - Ace = 1 point
-        - All other: points = Card number
-        
-        Start:
-        - Everyone gets 5 cards
-        - The one to joins first, begins
-        - Play in the order of joining the game
-        - The first card is never an 8
-        
-        Play:
-        - Every card (other than eight) you play must match the suit or denomination of the card on the deck
-        - The eights are crazy! Play it at anytime and define a new suit. The next player must play an eight or a card of matching suit
-        - If you can't play, draw cards until you can play
-        - If there is no card on the deck
-        - If the deck is empty and you can't play you are passed
-    """,
-    'start': """The 8s are loose 😲😲😲!
-        Get ready for a game of crazy 8s!
-        Before you begin here are the commands you can use during the game:\n""",
-    'commands': """  
-    /join: join a game
-    /leave: leave the game
-    /play: start a new game
-    /rules: short version of the game rules
-    /ruleslong: long version of the game rules
-    /score: current score
-    /endgame: ends the game for all (admin only)
-    /killbot: ends the bot and the game
-    /help: list of available commands"""
-}
+#class crazy8sbot():
+
 """
 object with attributes 
 + I want to follow an OO aproach 
 """
 
+def menu_command(update, context):
+    """
+    make a command through the keyboard
+
+    source: TODO: Cedric
+
+    """
+    keyboard = Keyboards.menu_keyboard[0]
+    context.bot.send_message(chat_id=update.effective_chat.id, text="Text keyboard", reply_markup=keyboard)
+
+
 
 def start(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id, text=messages['start'])
+    context.bot.send_message(chat_id=update.effective_chat.id, text=Messages.start[0])
 
 
 def join(update, context):
@@ -94,12 +64,12 @@ def play(update, context):
 
 def rules(update, context):
     """sends a description of the game."""
-    context.bot.send_message(chat_id=update.effective_chat.id, text=messages["rules"])
+    context.bot.send_message(chat_id=update.effective_chat.id, text=Messages["rules"])
 
 
 def rules_long(update, context):
     """sends a detailed description of the game"""
-    context.bot.send_message(chat_id=update.effective_chat.id, text=messages["rules_long"])
+    context.bot.send_message(chat_id=update.effective_chat.id, text=Messages["rules_long"])
 
 
 def score(update, context):
@@ -132,7 +102,7 @@ def kill():
 
 def bot_help(update, context):
     """sends a set of commands that can be used with the bot."""
-    context.bot.send_message(chat_id=update.effective_chat.id, text=messages["commands"])
+    context.bot.send_message(chat_id=update.effective_chat.id, text=Messages["commands"])
 
 
 def unknown_command(update, context):
@@ -158,13 +128,10 @@ def caps(update, context):
 caps_handler = CommandHandler('caps', caps)
 
 
-
-
-
-def message_handler(update, conext):
-    text = str(update.message.text).lower
-    response = ch.reply(text)
-    update.messafe.reply_text(response)
+# def message_handler(update, conext):
+#     text = str(update.message.text).lower
+#     response = ch.reply(text)
+#     update.messafe.reply_text(response)
 
 
 def main():
@@ -175,6 +142,14 @@ def main():
     dispatcher = updater.dispatcher
 
     # TODO: Persictence?
+
+    entry_points = [CommandHandler('start', start)]
+    states = {
+        States.MENU: [CommandHandler('join', join)]
+    }
+
+
+
 
     # adding all the handlers to the dispatcher
     start_handler = CommandHandler('start', start)
