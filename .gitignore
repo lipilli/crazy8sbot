@@ -6,3 +6,4 @@ cards_img*
 .idea*
 bot.log
 .vscode/
+src/__pycache__/
