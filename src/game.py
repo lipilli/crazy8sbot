@@ -19,18 +19,18 @@ class Game:
     def __init__(self, *players):
         self.hands = {}
         self.deck = [Card(value) for value in range(52)]
+        random.shuffle(self.deck)
 
         for player in players:
             hand = set()
 
             for i in range(5):
-                card = random.choice(self.deck)
-                self.deck.remove(card)
+                card = self.deck.pop()
                 hand.add(card)
 
             self.hands[player] = hand
 
-            lg.debug(f"dealt {[str(card) for card in hand]} to {player}")            
+            lg.debug(f"dealt {[str(card) for card in hand]} to {player}")
         
     def play_move(self, player, card):
         hand = self.hands[player]
