@@ -75,6 +75,12 @@ class Card:
 
     def __int__(self):
         return self.int_representation
+
+    def __eq__(self, other):
+        return self.int_representation == other.int_representation
+
+    def __hash__(self):
+        return self.int_representation
     
     def get_suit(self):
         return self.suits[self.int_representation % 4]
