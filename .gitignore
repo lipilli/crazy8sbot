@@ -7,3 +7,4 @@ cards_img*
 bot.log
 .vscode/
 src/__pycache__/
+testbot*

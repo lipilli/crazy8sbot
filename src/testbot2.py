@@ -14,7 +14,7 @@ def kill():
     exit()
 
 def main():
-    global updater;
+    global updater
     updater = Updater(token="1792398859:AAGoeCc9y2GX3MsUaHPRd0f2I9_lLxTUFgA", use_context=True)
     # sends updates all added handlers, the handlers send out commands or do sth. based on the input
     dispatcher = updater.dispatcher
