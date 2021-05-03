@@ -75,6 +75,23 @@ class Game:
             lg.debug(f"the stack is:{[str(card) for card in self.stack]}")
             return False
 
+    def get_keyboard(self, player):
+        cards_by_suit = {"♠":"", "♥":"", "♣":"", "♦":""}
+
+        for card in self.hands[player]:
+            cards_by_suit[card.get_suit()] = cards_by_suit[card.get_suit()] + str(card)[1:] # TODO: hier vtll `+ " "`?
+
+        keyboard = {
+            "keyboard" : [
+                ["DRAW ↑"],
+                ["♠" + cards_by_suit["♠"],"♥" + cards_by_suit["♥"],"DECK"],
+                ["♣" + cards_by_suit["♣"], "♦" + cards_by_suit["♦"], "MENU"]
+            ],
+            "resize_keyboard" : True
+        }
+
+        return keyboard
+
             
 
 def valid_move(card_played, card_on_stack):
