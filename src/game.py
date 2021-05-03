@@ -1,4 +1,3 @@
-
 # %%
 import random
 import logging as lg
@@ -56,3 +55,4 @@ class Game:
             return False
 
 # %%
+
