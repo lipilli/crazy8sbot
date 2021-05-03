@@ -13,8 +13,8 @@ class Card:
         
         int: The numbers represent cards in a sorted deck. This deck is sorted by rank first, and suit second.
 
-        So for example: ♠1♥1♣1♦1♠2♥2♣2♦2♠3♥3...
-                        0 1 2 3 4 5 6 7 8 9...
+        So for example: ♠A♥A♣A♦A♠2♥2♣2♦2♠3♥3♣3 ♦3 ♠4 ♥4...
+                        0 1 2 3 4 5 6 7 8 9 10 11 12 13...
         
         string: something like "♥J","♣K","♥2"""
         if type(representation) == int:
@@ -39,23 +39,23 @@ class Card:
 
             except ValueError:
                 if rank_str == "J":
-                    rank_int= 11
+                    rank_int = 11
                 elif rank_str == "Q":
-                    rank_int= 12
+                    rank_int = 12
                 elif rank_str == "K":
-                    rank_int= 13
+                    rank_int = 13
                 elif rank_str == "A":
-                    rank_int= 14
+                    rank_int = 1
                 else:
                     raise ValueError(("Invalid rank"))
 
-            self.int_representation = (rank_int - 2) * 4 + suit_int
+            self.int_representation = (rank_int - 1) * 4 + suit_int
 
         else:
             raise ValueError("Value must be str or int")
 
         # check for ValueErrors
-        if not 0 <= self.int_representation < 52:
+        if not 0 <= self.int_representation < 52: # TODO: this can go up
             raise ValueError("Invalid card name")
 
     def __str__(self):
@@ -68,7 +68,7 @@ class Card:
             rank = "Q"
         elif rank == 13:
             rank = "K"
-        elif rank == 14:
+        elif rank == 1:
             rank = "A"
 
         return f"{suit}{rank}"
@@ -80,5 +80,5 @@ class Card:
         return self.suits[self.int_representation % 4]
 
     def get_rank(self):
-        return int((self.int_representation - self.int_representation % 4) / 4 + 2)
+        return int((self.int_representation - self.int_representation % 4) / 4 + 1)
 # %%
