@@ -36,7 +36,9 @@ class Game:
         hand = self.hands[player]
         if card in hand:
             hand.remove(card)
-            lg.debug(f"{player} played {str(card)}")
+
+            lg.debug(f"player {player} played {str(card)} and now has {[str(card) for card in hand]}")
+
             return True
         else:
             return False
@@ -48,9 +50,13 @@ class Game:
         return 21
     
     def draw(self, player):
+        hand = self.hands[player]
         if len(self.deck) > 0:
             card = self.deck.pop()
-            self.hands[player].add(card)
+            hand.add(card)
+
+            lg.debug(f"player {player} drew {str(card)} and now has {[str(card) for card in hand]}")
+
             return True
         else:
             return False
@@ -59,3 +65,5 @@ class Game:
         return card_played.get_rank() == 8 or card_played.get_rank() == card_on_stack.get_rank() or card_played.get_suit() == card_on_stack.get_suit()
 # %%
 
+
+# %%
