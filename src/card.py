@@ -8,23 +8,55 @@ class Card:
 
     suits = "♠♥♣♦"
 
-    def __init__(self, value):
-        """Can be initialized with a string or int:
+    def __init__(self, representation):
+        """Can be initialized with a representation as string or int:
         
-        int: The values represent cards in a sorted deck. This deck is sorted by rank first, and suit second.
+        int: The numbers represent cards in a sorted deck. This deck is sorted by rank first, and suit second.
 
         So for example: ♠1♥1♣1♦1♠2♥2♣2♦2♠3♥3...
+                        0 1 2 3 4 5 6 7 8 9...
         
         string: something like "♥J","♣K","♥2"""
-        if type(value) == int:
-            if 0 <= value < 52:
-                self.value = value
-            else:
-                raise ValueError("card values must be from 0-51")
-        elif type(value) == str:
-            self.value = Card.str_to_card_value(value)
+        if type(representation) == int:
+            self.int_representation = representation
+
+        elif type(representation) == str:
+            # splitting string representation like "♣10" in suit ("♣") and rank ("10")
+            suit_str, rank_str = representation[0], representation[1:]
+            lg.debug(f"Processing card with suit_str={suit_str} and rank_str={rank_str}")
+
+            # turning suit ("♣") into an integer
+            suit_int = Card.suits.find(suit_str)
+            if suit_int == -1:
+                raise ValueError("Card string must start with one of [♠♥♣♦]")
+                return
+            
+            # turning rank ("10") into an integer
+            try:
+                rank_int = int(rank_str)
+                if not 2 <= rank_int <= 10:
+                    raise ValueError("Invalid rank")
+                    
+            except ValueError:
+                if rank_str == "J":
+                    rank_int= 11
+                elif rank_str == "Q":
+                    rank_int= 12
+                elif rank_str == "K":
+                    rank_int= 13
+                elif rank_str == "A":
+                    rank_int= 14
+                else:
+                    raise ValueError(("Invalid rank"))
+
+            self.int_representation = (rank_int - 2) * 4 + suit_int
+
         else:
             raise ValueError("Value must be str or int")
+
+        # check for ValueErrors
+        if not 0 <= self.int_representation < 52:
+            raise ValueError("Invalid card name")
 
     def __str__(self):
         suit = self.get_suit()
@@ -42,49 +74,13 @@ class Card:
         return f"{suit}{rank}"
 
     def __int__(self):
-        return self.value
+        return self.int_representation
     
     def get_suit(self):
-        return self.suits[self.value % 4]
+        return self.suits[self.int_representation % 4]
 
     def get_rank(self):
-        return int((self.value - self.value % 4) / 4 + 2)
-
-    def str_to_card_value(string):
-        """Returns the card object that corresponds to a string representation of a card.
-
-        Input (str): string representation of card. 
-        Output (Card): card object
-
-        Examples:
-        str_to_card("♥J") -> Card(37)
-        str_to_card("♣K") -> Card(46)
-        str_to_card("♥2") -> Card(1)
-        """
-        suit_str, rank_str = string[0], string[1:]
-        lg.debug(f"Processing card with suit_str={suit_str} and rank_str={rank_str}")
-
-        suit_int = Card.suits.find(suit_str)
-        if suit_int == -1:
-            raise ValueError("Card string must start with one of [♠♥♣♦]")
-            return
-        
-        try:
-            rank_int = int(rank_str)
-        except ValueError:
-            if rank_str == "J":
-                rank_int= 11
-            elif rank_str == "Q":
-                rank_int= 12
-            elif rank_str == "K":
-                rank_int= 13
-            elif rank_str == "A":
-                rank_int= 14
-            else:
-                raise ValueError(("Invalid rank"))
-
-        value = (rank_int - 2) * 4 + suit_int
-        return value
+        return int((self.int_representation - self.int_representation % 4) / 4 + 2)
 
 # TODO: more exeptions
 # %%
