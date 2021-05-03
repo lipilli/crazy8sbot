@@ -18,8 +18,8 @@ class Game:
     def __init__(self, *players):
         self.hands = {}
         self.deck = [Card(value) for value in range(52)]
-        self.stack = []
         random.shuffle(self.deck)
+        self.stack = [self.deck.pop()]
 
         for player in players:
             hand = set()
@@ -34,13 +34,16 @@ class Game:
         
     def play_move(self, player, card):
         hand = self.hands[player]
-        if card in hand:
+        if card in hand and valid_move(card, self.top_of_stack()):
             hand.remove(card)
+            self.stack.append(card)
 
-            lg.debug(f"player {player} played {str(card)} and now has {[str(card) for card in hand]}")
+            lg.debug(f"player {player} played {str(card)} on top of {self.top_of_stack()} and now has {[str(card) for card in hand]}")
 
             return True
         else:
+            lg.debug(f"player {player} tried to play the invalid move {str(card)} on top of {self.top_of_stack()} and now has {[str(card) for card in hand]}")
+
             return False
 
     def get_hand(self, player):
@@ -48,6 +51,9 @@ class Game:
 
     def get_score(self, player):
         return 21
+
+    def top_of_stack(self):
+        return self.stack[-1]
     
     def draw(self, player):
         hand = self.hands[player]
@@ -61,8 +67,8 @@ class Game:
         else:
             return False
 
-    def valid_move(card_played, card_on_stack):
-        return card_played.get_rank() == 8 or card_played.get_rank() == card_on_stack.get_rank() or card_played.get_suit() == card_on_stack.get_suit()
+def valid_move(card_played, card_on_stack):
+    return card_played.get_rank() == 8 or card_played.get_rank() == card_on_stack.get_rank() or card_played.get_suit() == card_on_stack.get_suit()
 # %%
 
 
