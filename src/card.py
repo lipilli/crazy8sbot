@@ -87,4 +87,18 @@ class Card:
 
     def get_rank(self):
         return int((self.int_representation - self.int_representation % 4) / 4 + 1)
+
+    def get_score(self):
+        """Output: Crazy8s score value for this card"""
+        rank = self.get_rank()
+
+        if rank == 8:
+            return 50
+
+        elif rank > 10:
+            return 10
+
+        else:
+            return rank
+
 # %%

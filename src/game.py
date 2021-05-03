@@ -54,8 +54,8 @@ class Game:
     def get_hand(self, player):
         return self.hands[player]
 
-    def get_score(self, player):
-        return 21
+    def get_hand_score(self, player):
+        return sum([card.get_score() for card in self.hands[player]])
 
     def top_of_stack(self):
         return self.stack[-1]
