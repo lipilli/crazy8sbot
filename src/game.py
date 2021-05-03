@@ -18,7 +18,7 @@ class Game:
     def __init__(self, *players):
         self.hands = {}
         self.deck = [Card(value) for value in range(52)]
-        self.deck = []
+        self.stack = []
         random.shuffle(self.deck)
 
         for player in players:
@@ -48,7 +48,7 @@ class Game:
         return 21
     
     def draw(self, player):
-        if len(deck) > 0:
+        if len(self.deck) > 0:
             card = self.deck.pop()
             self.hands[player].add(card)
             return True
