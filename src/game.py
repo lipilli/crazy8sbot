@@ -18,6 +18,7 @@ class Game:
     def __init__(self, *players):
         self.hands = {}
         self.deck = [Card(value) for value in range(52)]
+        self.deck = []
         random.shuffle(self.deck)
 
         for player in players:
@@ -54,5 +55,7 @@ class Game:
         else:
             return False
 
+    def valid_move(card_played, card_on_stack):
+        return card_played.get_rank() == 8 or card_played.get_rank() == card_on_stack.get_rank() or card_played.get_suit() == card_on_stack.get_suit()
 # %%
 

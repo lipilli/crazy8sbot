@@ -9,13 +9,22 @@ class Card:
     suits = "♠♥♣♦"
 
     def __init__(self, value):
-        """The values represent cards in a sorted deck. This deck is sorted by rank first, and suit second.
+        """Can be initialized with a string or int:
+        
+        int: The values represent cards in a sorted deck. This deck is sorted by rank first, and suit second.
 
-        So for example: ♠1♥1♣1♦1♠2♥2♣2♦2♠3♥3..."""
-        if 0 <= value < 52:
-            self.value = value
+        So for example: ♠1♥1♣1♦1♠2♥2♣2♦2♠3♥3...
+        
+        string: something like "♥J","♣K","♥2"""
+        if type(value) == int:
+            if 0 <= value < 52:
+                self.value = value
+            else:
+                raise ValueError("card values must be from 0-51")
+        elif type(value) == str:
+            self.value = Card.str_to_card_value(value)
         else:
-            raise ValueError("card values must be from 0-51")
+            raise ValueError("Value must be str or int")
 
     def __str__(self):
         suit = self.get_suit()
@@ -41,7 +50,7 @@ class Card:
     def get_rank(self):
         return int((self.value - self.value % 4) / 4 + 2)
 
-    def str_to_card(string):
+    def str_to_card_value(string):
         """Returns the card object that corresponds to a string representation of a card.
 
         Input (str): string representation of card. 
@@ -75,7 +84,7 @@ class Card:
                 raise ValueError(("Invalid rank"))
 
         value = (rank_int - 2) * 4 + suit_int
-        return Card(value)
+        return value
 
 # TODO: more exeptions
 # %%
