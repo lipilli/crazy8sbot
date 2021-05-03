@@ -28,17 +28,6 @@ class Card:
             rank = "A"
 
         return f"{suit}{rank}"
-    
-    def rank_str_to_int(rank):
-        if 11 <= rank <= 14:
-            if rank == 11:
-                return "J"
-            elif rank == 12:
-                return "Q"
-            elif rank == 13:
-                return "K"
-            elif rank == 14:
-                return "A"
 
     def __int__(self):
         return self.value
