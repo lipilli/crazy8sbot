@@ -12,7 +12,10 @@ class Card:
         """The values represent cards in a sorted deck. This deck is sorted by rank first, and suit second.
 
         So for example: ♠1♥1♣1♦1♠2♥2♣2♦2♠3♥3..."""
-        self.value = value
+        if 0 <= value < 52:
+            self.value = value
+        else:
+            raise ValueError("card values must be from 0-51")
 
     def __str__(self):
         suit = self.get_suit()
