@@ -36,7 +36,7 @@ class Card:
                 rank_int = int(rank_str)
                 if not 2 <= rank_int <= 10:
                     raise ValueError("Invalid rank")
-                    
+
             except ValueError:
                 if rank_str == "J":
                     rank_int= 11
@@ -81,6 +81,4 @@ class Card:
 
     def get_rank(self):
         return int((self.int_representation - self.int_representation % 4) / 4 + 2)
-
-# TODO: more exeptions
 # %%
