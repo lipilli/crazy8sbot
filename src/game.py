@@ -78,7 +78,11 @@ class Game:
             
 
 def valid_move(card_played, card_on_stack):
-    return card_played.get_rank() == 8 or card_played.get_rank() == card_on_stack.get_rank() or card_played.get_suit() == card_on_stack.get_suit()
+    crazy8 = card_played.get_rank() == 8
+    rank_fits = card_played.get_rank() == card_on_stack.get_rank()
+    suit_fits = card_played.get_suit() == card_on_stack.get_suit()
+
+    return crazy8 or rank_fits or suit_fits
 # %%
 
 
