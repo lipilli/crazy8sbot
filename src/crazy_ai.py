@@ -55,4 +55,6 @@ def minmax(nodes, depth=5, eval_min=min, eval_max=max):
             node_values.append(value)
         return eval_max(node_values)
 
-def best_move()
+def best_move():
+    return
+# %%
