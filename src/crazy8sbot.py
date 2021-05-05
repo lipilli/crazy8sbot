@@ -7,17 +7,19 @@ Add this bot to your telegram group and play crazy eights with your friends.
 from telegram.ext import Updater
 from telegram.ext import CommandHandler
 from telegram.ext import MessageHandler, Filters
+from telegram.ext import ConversationHandler
 import logging
 
 # custom modules
 from constants import messages
-from constants import menu_keyboard
+from constants import conversation_states
+from constants import keyboards
 from constants import BOT_TOKEN
-from constants import states
+
 
 # setup logging
 # source: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Extensions-%E2%80%93-Your-first-Bot
-logging.basicConfig(filename="bot.log", format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logging.basicConfig( format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 
 # TODO: command handlers: start, join, play, score, help rules, endgame, killbot
 # TODO: Message handlers: lay cards, curse words / emojis
@@ -27,12 +29,6 @@ logging.basicConfig(filename="bot.log", format='%(asctime)s - %(name)s - %(level
 # TODO: create 2 extrabots
 
 
-def play_card_keyboard(player):
-    pass
-
-
-def deck_keyboard(player, suit):
-    pass
 
 '''
 Creates Keyboards on the fly
@@ -58,6 +54,9 @@ decck_keyboard = {
     ]
 }
 
+
+Worst case Szenario 
+
 '''
 
 
@@ -66,123 +65,196 @@ TODO: Join/Leave events of members:
 - Array: add when sb joins, pop when someone leaves
 - always add the first 5 of the array
 - kick the rest out of the group (bot needs admin rights)
+
+message: 
+new_chat_members
+left_chat_member
 '''
 
 
-def menu_command(update, context):
-    """
-    make a command through the keyboard
+class Crazy8sbot:
+    def __init__(self, bot_token):
+        self.game = None
+        self.players = []
+        self.players_left = []
 
-    source: TODO: Cedric
+        # continuously  checks for incoming messages
+        self.updater = Updater(token=bot_token, use_context=True)
+        # sends updates all added handlers, the handlers send out commands or do sth. based on the input
+        self.dispatcher = self.updater.dispatcher
+        # adding handlers
+        self.dispatcher.add_handler(Crazy8sbot.navigation)
+        self.dispatcher.add_handler(Crazy8sbot.unknown_command_handler)
 
-    """
-    context.bot.send_message(chat_id=update.effective_chat.id, text="Text keyboard", reply_markup=menu_keyboard)
-
-
-def play(update, context):
-    pass
-
-
-def rules(update, context):
-    """sends a description of the game."""
-    context.bot.send_message(chat_id=update.effective_chat.id, text=messages["rules"])
-
-
-def rules_long(update, context):
-    """sends a detailed description of the game"""
-    context.bot.send_message(chat_id=update.effective_chat.id, text=messages["rules_long"])
+        # start scanning for new messages
+        self.updater.start_polling()
 
 
-def score(update, context):
-    pass
+    def lobby(update, context):
+        context.bot.send_message(chat_id=update.effective_chat.id,text=messages["rules"], reply_markup=keyboards['join'])
+        return conversation_states['lobby']
+
+    def join(update, context, self):
+        self.players.push(update.message.from_user.id)
+        context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.from_user.first_name)
+        #print(update.message.from_user.first_name)
 
 
-def stop(update, context): # nur admin
-    context.bot.send_message(chat_id=update.effective_chat.id, text="See ya 😋")
-    ##delete game instance
-    pass
+    def play_card_keyboard(player):
+        pass
 
 
-def kill():
-    """kills the bot instance."""
-    # source https://github.com/python-telegram-bot/python-telegram-bot/issues/801
-    updater.stop()
-    updater.is_idle = False
-    exit()
+    def deck_keyboard(player, suit):
+        pass
 
 
-def bot_help(update, context):
-    """sends a set of commands that can be used with the bot."""
-    context.bot.send_message(chat_id=update.effective_chat.id, text=messages["commands"])
+class Crazy8sbot:
+    def __init__(self, bot_token):
+        self.game = None
+        self.players = []
+        self.players_left = []
+
+        # continuously  checks for incoming messages
+        self.updater = Updater(token=bot_token, use_context=True)
+        # sends updates all added handlers, the handlers send out commands or do sth. based on the input
+        self.dispatcher = self.updater.dispatcher
+        # adding handlers
+        self.dispatcher.add_handler(Crazy8sbot.navigation)
+        self.dispatcher.add_handler(Crazy8sbot.unknown_command_handler)
+
+        # start scanning for new messages
+        self.updater.start_polling()
 
 
-def unknown_command(update, context):
-    # source https://github.com/python-telegram-bot/python-telegram-bot/issues/801
-    context.bot.send_message(chat_id=update.effective_chat.id, text="I'm sorry but I don't know that command😟.")
+    def lobby(update, context):
+        context.bot.send_message(chat_id=update.effective_chat.id,text=messages["rules"], reply_markup=keyboards['join'])
+        return conversation_states['lobby']
 
+    def join(update, context, self):
+        self.players.push(update.message.from_user.id)
+        context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.from_user.first_name)
+        #print(update.message.from_user.first_name)
+
+
+    def play_card_keyboard(player):
+        pass
+
+
+    def deck_keyboard(player, suit):
+        pass
+
+
+    def menu_command(update, context):
+        """
+        make a command through the keyboard
+
+        source: TODO: Cedric
+
+        """
+        context.bot.send_message(chat_id=update.effective_chat.id, reply_markup=keyboards['menu'])
+
+    def kick_all_ecess_players(bot):
+        pass
+
+
+    def play(update, context):
+        # TODO:kick_all_ecess_players(bot)
+        pass
+
+
+    def rules(update, context):
+        """sends a description of the game."""
+        context.bot.send_message(chat_id=update.effective_chat.id, text=messages["rules"])
+
+
+    def rules_long(update, context):
+        """sends a detailed description of the game"""
+        context.bot.send_message(chat_id=update.effective_chat.id, text=messages["rules_long"])
+
+
+    def score(update, context):
+        pass
+
+
+    def stop(update, context): # nur admin
+        context.bot.send_message(chat_id=update.effective_chat.id, text="See ya 😋")
+        ##delete game instance
+        pass
+
+
+    def kill(updater):
+        """kills the bot instance."""
+        # source https://github.com/python-telegram-bot/python-telegram-bot/issues/801
+        updater.stop()
+        updater.is_idle = False
+        exit()
+
+
+    def bot_help(update, context):
+        """sends a set of commands that can be used with the bot."""
+        context.bot.send_message(chat_id=update.effective_chat.id, text=messages["commands"])
+
+
+    def unknown_command(update, context):
+        # source https://github.com/python-telegram-bot/python-telegram-bot/issues/801
+        context.bot.send_message(chat_id=update.effective_chat.id, text="I'm sorry but I don't know that command😟.")
+
+    entry_points = [MessageHandler(Filters.regex('@crazy8sbot'), lobby)]
+    states = {
+        conversation_states['lobby']: [CommandHandler('join', join), CommandHandler('play', play)], #add leave
+        conversation_states['menu']: [ CommandHandler('rules', rules),
+                                       CommandHandler('ruleslong', rules_long),
+                                       CommandHandler('score', score),
+                                       CommandHandler('help', bot_help)],
+         conversation_states['deck_page1']:[]
+        # conversation_states['deck_page2']:[],
+        # conversation_states['deck_page3']:[],
+        # conversation_states['deck_page4']:[]
+        }
+    fallbacks = []
+    navigation = ConversationHandler(entry_points,
+                                     states,
+                                     fallbacks,
+                                     persistent=False,
+                                     name="navigation")
+
+# class Crazy8sbot():
 #
-# # -------Old stuff
-# # Message Hanlder that returns the same message that just came in
-# def echo(update, context):
-#     context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.text)
+#     def __init__(self, bot_token):
+#         self.updater = Updater(token=bot_token, use_context=True)
+#         self.dispatcher = self.updater.dispatcher
+#         # self.dispatcher.add_handler(Crazy8sbot.start_handler)
+#         self.updater.start_polling()
+#         self.dispatcher.add_handler(Crazy8sbot.menu_navigation)
 #
-# echo_handler = MessageHandler(Filters.text & (~Filters.command), echo)
+#     def start(update, context):
+#         context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!")
+#         return 0
 #
+#     def __init__(self, bot_token):
+#         self.updater = Updater(token=bot_token, use_context=True)
+#         self.dispatcher = self.updater.dispatcher
+#         # self.dispatcher.add_handler(Crazy8sbot.start_handler)
+#         self.updater.start_polling()
+#         self.dispatcher.add_handler(Crazy8sbot.menu_navigation)
 #
-#
-# # echo with caps
-# def caps(update, context):
-#     text_caps = ' '.join(context.args).upper()
-#     context.bot.send_message(chat_id=update.effective_chat.id, text=text_caps)
-#
-#
-# caps_handler = CommandHandler('caps', caps)
-#
-#
-# # def message_handler(update, conext):
-# #     text = str(update.message.text).lower
-# #     response = ch.reply(text)
-# #     update.messafe.reply_text(response)
-
-
-def main():
-    # continuously  checks for incoming messages
-    global updater
-    updater = Updater(token=BOT_TOKEN, use_context=True)
-    # sends updates all added handlers, the handlers send out commands or do sth. based on the input
-    dispatcher = updater.dispatcher
-
-    #TODO conversationhandler???
-
-    # entry_points = [CommandHandler('start', start)]
-    # states = {
-    #     States.MENU: [CommandHandler('join', join)]
-    # }
-    #
-
-    # adding all the handlers to the dispatcher
-    play_handler = CommandHandler("play", play)
-    dispatcher.add_handler(play_handler)
-
-    rules_handler = CommandHandler("rules", rules)
-    dispatcher.add_handler(rules_handler)
-
-    rules_long_handler = CommandHandler("ruleslong", rules_long)
-    dispatcher.add_handler(rules_long_handler)
-
-    score_handler = CommandHandler("score", score)
-    dispatcher.add_handler(score_handler)
-
-    bot_help_handler = CommandHandler("help", bot_help)
-    dispatcher.add_handler(bot_help_handler)
-
+#     entry_points = [MessageHandler(Filters.regex('Hello crazy8sbot'), start)]
+#     states = {
+#         conversation_states['lobby']: [MessageHandler(Filters.regex('Hello crazy8sbot'), start)]
+#         }
+#     fallbacks = []
+#     menu_navigation = ConversationHandler(entry_points, states, fallbacks, persistent=False, name="menu_navigation")
     unknown_command_handler = MessageHandler(Filters.command, unknown_command)
-    dispatcher.add_handler(unknown_command_handler)
-
-    # start scanning for new messages
-    updater.start_polling()
-    # kill_bot()
 
 
 if __name__ == "__main__":
-    main()
+    Crazy8sbot(BOT_TOKEN)
+    # def start(update, context):
+    #     context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!")
+    #
+    #
+    # updater = Updater(token=BOT_TOKEN, use_context=True)
+    # dispatcher = updater.dispatcher
+    # start_handler = CommandHandler('start', start)
+    # dispatcher.add_handler(start_handler)
+    # updater.start_polling()
