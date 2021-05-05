@@ -25,7 +25,7 @@ n2.children = [nc, nd]
 
 # %% minmax
 
-def minmax(nodes, depth=5, eval_min=min, eval_max=max):
+def minmax(nodes, depth=5, eval_min=min, eval_max=max): # TODO: This assumes 2 players. I need to modify it to account for up to 5
     """Minmax search in a tree of nodes. 
     
     Each branch must have the same length. Evaluation functions must be comparable by equality.
@@ -55,6 +55,19 @@ def minmax(nodes, depth=5, eval_min=min, eval_max=max):
             node_values.append(value)
         return eval_max(node_values)
 
-def best_move():
+def best_move(hands, current_player, player_order):
+    """Best move for crazy8 game.
+
+    Input:
+    hands: dict from int->set(Cards)
+    current_player: one key of hands
+    play_order: list of keys of hands
+    
+    Output:
+    Best card for current player to play"""
+
+    # TODO: Problem: Wie berechnen wir den Zufall beim Ziehen mit ein?
+
+    starting_position = player_order.index(player)
     return
 # %%
