@@ -83,7 +83,7 @@ class Crazy8sbot:
         # sends updates all added handlers, the handlers send out commands or do sth. based on the input
         self.dispatcher = self.updater.dispatcher
         # adding handlers
-        self.dispatcher.add_handler(Crazy8sbot.navigation)
+        self.dispatcher.add_handler(Crazy8sbot.navigation) #@cedric: this doesn'T work
         self.dispatcher.add_handler(Crazy8sbot.unknown_command_handler)
 
         # start scanning for new messages
@@ -201,8 +201,8 @@ class Crazy8sbot:
 
     entry_points = [MessageHandler(Filters.regex('@crazy8sbot'), lobby)]
     states = {
-        conversation_states['lobby']: [CommandHandler('join', join), CommandHandler('play', play)], #add leave
-        conversation_states['menu']: [ CommandHandler('rules', rules),
+        conversation_states['lobby']: [CommandHandler('join', join), CommandHandler('play', play)], #@Cedric: this does not work
+        conversation_states['menu']: [CommandHandler('rules', rules),
                                        CommandHandler('ruleslong', rules_long),
                                        CommandHandler('score', score),
                                        CommandHandler('help', bot_help)],
