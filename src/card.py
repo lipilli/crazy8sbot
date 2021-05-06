@@ -1,12 +1,11 @@
 # %%
 import logging as lg
+import constants
 
 lg.basicConfig(level=lg.DEBUG)
-# %%
+
 class Card:
     """A card in the standard deck of crazy8, poker and so forth."""
-
-    suits = "♠♥♣♦"
 
     def __init__(self, representation):
         """Can be initialized with a representation as string or int:
@@ -26,7 +25,7 @@ class Card:
             lg.debug(f"Processing card with suit_str={suit_str} and rank_str={rank_str}")
 
             # turning suit ("♣") into an integer
-            suit_int = Card.suits.find(suit_str)
+            suit_int = constants.suits.find(suit_str)
             if suit_int == -1:
                 raise ValueError("Card string must start with one of [♠♥♣♦]")
                 return
@@ -59,8 +58,9 @@ class Card:
             raise ValueError("Invalid card name")
 
     def __str__(self):
-        suit = self.get_suit()
-        rank = self.get_rank()
+        """string representation of card. See constructor."""
+        suit = self.suit # TODO: in property umwandeln!
+        rank = self.rank
 
         if rank == 11:
             rank = "J"
@@ -74,6 +74,7 @@ class Card:
         return f"{suit}{rank}"
 
     def __int__(self):
+        """int representation of card. See constructor."""
         return self.int_representation
 
     def __eq__(self, other):
@@ -82,15 +83,19 @@ class Card:
     def __hash__(self):
         return self.int_representation
     
-    def get_suit(self):
-        return self.suits[self.int_representation % 4]
+    @property
+    def suit(self):
+        """Return rank of card as a string. These ranks are defined in constants.rank"""
+        return constants.suits[self.int_representation % 4]
 
-    def get_rank(self):
+    @property
+    def rank(self):
+        """Return rank of card as integer. A will be 1, J 11, K 12, Q 13."""
         return int((self.int_representation - self.int_representation % 4) / 4 + 1)
 
     def get_score(self):
         """Output: Crazy8s score value for this card"""
-        rank = self.get_rank()
+        rank = self.rank
 
         if rank == 8:
             return 50
