@@ -1,13 +1,11 @@
 # %%
 import logging as lg
+import constants
 
 lg.basicConfig(level=lg.DEBUG)
 # %%
 class Card:
     """A card in the standard deck of crazy8, poker and so forth."""
-
-    # suits = "♠♥♣♦" 
-    suits = "shcd" # used for debugging. switch with line on top for release
 
     def __init__(self, representation):
         """Can be initialized with a representation as string or int:
@@ -27,7 +25,7 @@ class Card:
             lg.debug(f"Processing card with suit_str={suit_str} and rank_str={rank_str}")
 
             # turning suit ("♣") into an integer
-            suit_int = Card.suits.find(suit_str)
+            suit_int = constants.suits.find(suit_str)
             if suit_int == -1:
                 raise ValueError("Card string must start with one of [♠♥♣♦]")
                 return
@@ -77,15 +75,16 @@ class Card:
     def __int__(self):
         return self.int_representation
 
-    def __eq__(self, other):
-        return self.int_representation == other.int_representation
+    # TODO: Hab vergessen, warum sie wichtig sind. Wenn später Fehler deswegen kommen, einfach wieder entkommentieren.
+    #def __eq__(self, other):
+    #    return self.int_representation == other.int_representation
 
-    def __hash__(self):
-        return self.int_representation
+    #def __hash__(self):
+    #    return self.int_representation
     
     @property
     def suit(self):
-        return self.suits[self.int_representation % 4]
+        return constants.suits[self.int_representation % 4]
 
     @property
     def rank(self):

@@ -1,4 +1,3 @@
-# %%
 import random
 import logging as lg
 from card import Card
@@ -6,7 +5,6 @@ from constants import MoveOutcome
 
 lg.basicConfig(level=lg.DEBUG)
 
-# %%
 class Game:
     """Manages game states, player hands and so forth.
 
@@ -169,9 +167,3 @@ def valid_move(card_played, card_on_stack):
     suit_fits = card_played.suit == card_on_stack.suit
 
     return crazy8 or rank_fits or suit_fits
-
-
-# %%
-
-
-# %%
