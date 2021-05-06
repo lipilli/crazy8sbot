@@ -1,3 +1,4 @@
+# %%
 import random
 import logging as lg
 from card import Card
@@ -15,12 +16,17 @@ class Game:
     A hand is a set of cards."""
 
     def __init__(self, *players):
+        """Initialize the game but don't start it yet.
+
+        Input:
+        players (iterable of int): unique id's for each player"""
         self.scores = dict([(player, 0) for player in players])
         self.players = players
         self.round_over = True
         
     
     def new_round(self):
+        """Start a new round. That means resetting deck and stack and dealing cards to all players."""
         self.hands = {}
         self.deck = [Card(value) for value in range(52)] # TODO: generalize this to new_round
         random.shuffle(self.deck)
@@ -49,7 +55,7 @@ class Game:
 
     @property
     def leading_player(self):
-        """returns id of player with the maximum score"""
+        """Returns id of player with the highest score in the game"""
         max_score = 0
         _leading_player = None
 
@@ -61,7 +67,12 @@ class Game:
         return _leading_player
 
 
-    def play(self, player, card):
+    def move(self, player, card):
+        """Attempts to play one card on the stack.
+
+        Input:
+        player (int): unique id for player
+        card (Card): card to be played"""
         if self.round_over:
             raise Exception("Invalid move. New round hasn't started yet.") # TODO: This could also be another MoveOutcome
 

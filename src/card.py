@@ -3,7 +3,7 @@ import logging as lg
 import constants
 
 lg.basicConfig(level=lg.DEBUG)
-# %%
+
 class Card:
     """A card in the standard deck of crazy8, poker and so forth."""
 
@@ -58,6 +58,7 @@ class Card:
             raise ValueError("Invalid card name")
 
     def __str__(self):
+        """string representation of card. See constructor."""
         suit = self.suit # TODO: in property umwandeln!
         rank = self.rank
 
@@ -73,21 +74,24 @@ class Card:
         return f"{suit}{rank}"
 
     def __int__(self):
+        """int representation of card. See constructor."""
         return self.int_representation
 
     # TODO: Hab vergessen, warum sie wichtig sind. Wenn später Fehler deswegen kommen, einfach wieder entkommentieren.
-    #def __eq__(self, other):
-    #    return self.int_representation == other.int_representation
+    def __eq__(self, other):
+        return self.int_representation == other.int_representation
 
-    #def __hash__(self):
-    #    return self.int_representation
+    def __hash__(self):
+        return self.int_representation
     
     @property
     def suit(self):
+        """Return rank of card as a string. These ranks are defined in constants.rank"""
         return constants.suits[self.int_representation % 4]
 
     @property
     def rank(self):
+        """Return rank of card as integer. A will be 1, J 11, K 12, Q 13."""
         return int((self.int_representation - self.int_representation % 4) / 4 + 1)
 
     def get_score(self):
