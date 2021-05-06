@@ -19,7 +19,7 @@ class Game:
     def __init__(self, *players):
         self.scores = dict([(player, 0) for player in players])
         self.players = players
-        self.new_round()
+        self.round_over = True
         
     
     def new_round(self):
@@ -27,11 +27,11 @@ class Game:
         self.deck = [Card(value) for value in range(52)] # TODO: generalize this to new_round
         random.shuffle(self.deck)
         self.stack = [self.deck.pop()]
-        self.round_won = False
+        self.round_over = False
 
         # 8 cant be the first card on stack
-        while self.top_of_stack().get_rank() == 8:
-            old_top = self.top_of_stack()
+        while self.top_of_stack.rank == 8:
+            old_top = self.top_of_stack
             self.stack.remove(old_top)
             self.deck.insert(len(self.deck/2), old_top) # TODO: This could be more random
             self.stack.append(self.deck.pop())
@@ -64,17 +64,17 @@ class Game:
 
 
     def play(self, player, card):
-        if self.round_won:
-            raise Exception("Invalid move. Round is already won.") # TODO: This could also be another MoveOutcome
+        if self.round_over:
+            raise Exception("Invalid move. New round hasn't started yet.") # TODO: This could also be another MoveOutcome
 
         hand = self.hands[player]
         
         # check if card can be played
-        if card in hand and valid_move(card, self.top_of_stack()):
+        if card in hand and valid_move(card, self.top_of_stack):
             # play move
             hand.remove(card)
 
-            lg.debug(f"player {player} played {str(card)} on top of {self.top_of_stack()} and now has {[str(card) for card in hand]}")
+            lg.debug(f"player {player} played {str(card)} on top of {self.top_of_stack} and now has {[str(card) for card in hand]}")
 
             self.stack.append(card)
 
@@ -85,7 +85,7 @@ class Game:
                 # calculate and add score for winning player
                 hand_score_sum = sum([self.get_hand_score(player) for player in self.players])
                 self.scores[player] += hand_score_sum
-                self.round_won = True
+                self.round_over = True
 
                 lg.debug(f"That wins the round for player {player} with {hand_score_sum} points. Player {player} now has {self.scores[player]} in total. The other players scores are: {self.scores}")
 
@@ -103,7 +103,7 @@ class Game:
         
         else:
             # invalid move
-            lg.debug(f"player {player} tried to play the invalid move {str(card)} on top of {self.top_of_stack()} and now has {[str(card) for card in hand]}")
+            lg.debug(f"player {player} tried to play the invalid move {str(card)} on top of {self.top_of_stack} and now has {[str(card) for card in hand]}")
             lg.debug(f"the stack is:{[str(card) for card in self.stack]}")
 
             return MoveOutcome.invalid_move
@@ -114,6 +114,7 @@ class Game:
     def get_hand_score(self, player):
         return sum([card.get_score() for card in self.hands[player]])
 
+    @property
     def top_of_stack(self):
         return self.stack[-1]
     
@@ -136,7 +137,7 @@ class Game:
         cards_by_suit = {"♠":"", "♥":"", "♣":"", "♦":""}
 
         for card in self.hands[player]:
-            cards_by_suit[card.get_suit()] = cards_by_suit[card.get_suit()] + str(card)[1:] # TODO: hier vtll `+ " "`?
+            cards_by_suit[card.suit] = cards_by_suit[card.suit] + str(card)[1:] # TODO: hier vtll `+ " "`?
 
         keyboard = {
             "keyboard" : [
@@ -150,9 +151,9 @@ class Game:
         return keyboard
 
 def valid_move(card_played, card_on_stack):
-    crazy8 = card_played.get_rank() == 8
-    rank_fits = card_played.get_rank() == card_on_stack.get_rank()
-    suit_fits = card_played.get_suit() == card_on_stack.get_suit()
+    crazy8 = card_played.rank == 8
+    rank_fits = card_played.rank == card_on_stack.rank
+    suit_fits = card_played.suit == card_on_stack.suit
 
     return crazy8 or rank_fits or suit_fits
 # %%

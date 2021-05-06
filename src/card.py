@@ -60,8 +60,8 @@ class Card:
             raise ValueError("Invalid card name")
 
     def __str__(self):
-        suit = self.get_suit()
-        rank = self.get_rank()
+        suit = self.suit # TODO: in property umwandeln!
+        rank = self.rank
 
         if rank == 11:
             rank = "J"
@@ -83,15 +83,17 @@ class Card:
     def __hash__(self):
         return self.int_representation
     
-    def get_suit(self):
+    @property
+    def suit(self):
         return self.suits[self.int_representation % 4]
 
-    def get_rank(self):
+    @property
+    def rank(self):
         return int((self.int_representation - self.int_representation % 4) / 4 + 1)
 
     def get_score(self):
         """Output: Crazy8s score value for this card"""
-        rank = self.get_rank()
+        rank = self.rank
 
         if rank == 8:
             return 50
