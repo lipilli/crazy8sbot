@@ -128,6 +128,7 @@ class Game:
         return self.stack[-1]
     
     def draw(self, player):
+        """Attempts to draw one card into the specified players hand."""
         hand = self.hands[player]
         if len(self.deck) > 0:
             card = self.deck.pop()
@@ -160,6 +161,7 @@ class Game:
         return keyboard
 
     def can_move(self, player):
+        """Returns true if there is a valid move for the specified player."""
         can_move = False
 
         for card in self.hands[player]:
@@ -173,6 +175,7 @@ class Game:
         # return max([valid_move(card, self.top_of_stack) for card in self.hands[1]])
 
 def valid_move(card_played, card_on_stack):
+    """Returns true if it would be a valid move to play card_played on top of card_on_stack"""
     crazy8 = card_played.rank == 8
     rank_fits = card_played.rank == card_on_stack.rank
     suit_fits = card_played.suit == card_on_stack.suit

@@ -77,7 +77,6 @@ class Card:
         """int representation of card. See constructor."""
         return self.int_representation
 
-    # TODO: Hab vergessen, warum sie wichtig sind. Wenn später Fehler deswegen kommen, einfach wieder entkommentieren.
     def __eq__(self, other):
         return self.int_representation == other.int_representation
 
