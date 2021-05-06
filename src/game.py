@@ -2,6 +2,7 @@
 import random
 import logging as lg
 from card import Card
+from constants import MoveOutcome
 
 lg.basicConfig(level=lg.DEBUG)
 
@@ -16,22 +17,28 @@ class Game:
     A hand is a set of cards."""
 
     def __init__(self, *players):
+        self.scores = dict([(player, 0) for player in players])
+        self.players = players
+        self.new_round()
+        
+    
+    def new_round(self):
         self.hands = {}
-        self.deck = [Card(value) for value in range(52)]
+        self.deck = [Card(value) for value in range(52)] # TODO: generalize this to new_round
         random.shuffle(self.deck)
-        self.rounds = []
         self.stack = [self.deck.pop()]
+        self.round_won = False
 
         # 8 cant be the first card on stack
         while self.top_of_stack().get_rank() == 8:
             old_top = self.top_of_stack()
-            self.remove(old_top)
-            self.deck.insert(len(self.deck/2), old_top)
+            self.stack.remove(old_top)
+            self.deck.insert(len(self.deck/2), old_top) # TODO: This could be more random
             self.stack.append(self.deck.pop())
 
         lg.debug(f"the stack is:{[str(card) for card in self.stack]}")
 
-        for player in players:
+        for player in self.players:
             hand = set()
 
             for i in range(5):
@@ -41,13 +48,30 @@ class Game:
             self.hands[player] = hand
 
             lg.debug(f"dealt {[str(card) for card in hand]} to {player}")
-    
-    def new_round(self):
-        return
 
-    def play_move(self, player, card):
+    @property
+    def leading_player(self):
+        """returns id of player with the maximum score"""
+        max_score = 0
+        _leading_player = None
+
+        for player, score in self.scores.items():
+            if score > max_score:
+                max_score = score
+                _leading_player = player
+
+        return _leading_player
+
+
+    def play(self, player, card):
+        if self.round_won:
+            raise Exception("Invalid move. Round is already won.") # TODO: This could also be another MoveOutcome
+
         hand = self.hands[player]
+        
+        # check if card can be played
         if card in hand and valid_move(card, self.top_of_stack()):
+            # play move
             hand.remove(card)
 
             lg.debug(f"player {player} played {str(card)} on top of {self.top_of_stack()} and now has {[str(card) for card in hand]}")
@@ -56,12 +80,33 @@ class Game:
 
             lg.debug(f"the stack is:{[str(card) for card in self.stack]}")
 
-            return True
+            # check if move wins the round
+            if len(self.hands[player]) == 0:
+                # calculate and add score for winning player
+                hand_score_sum = sum([self.get_hand_score(player) for player in self.players])
+                self.scores[player] += hand_score_sum
+                self.round_won = True
+
+                lg.debug(f"That wins the round for player {player} with {hand_score_sum} points. Player {player} now has {self.scores[player]} in total. The other players scores are: {self.scores}")
+
+                # check if move also wins the game
+                if self.scores[self.leading_player] >= 100:
+                    lg.debug(f"And it wins the game for player {player} with {self.scores[player]} points.")
+
+                    return MoveOutcome.game_won
+                else:
+                    return MoveOutcome.round_won
+
+            # nothing is won, just a normal valid move
+            else:
+                return MoveOutcome.valid_move
+        
         else:
+            # invalid move
             lg.debug(f"player {player} tried to play the invalid move {str(card)} on top of {self.top_of_stack()} and now has {[str(card) for card in hand]}")
             lg.debug(f"the stack is:{[str(card) for card in self.stack]}")
 
-            return False
+            return MoveOutcome.invalid_move
 
     def get_hand(self, player):
         return self.hands[player]
@@ -103,8 +148,6 @@ class Game:
         }
 
         return keyboard
-
-            
 
 def valid_move(card_played, card_on_stack):
     crazy8 = card_played.get_rank() == 8

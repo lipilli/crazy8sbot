@@ -6,7 +6,8 @@ lg.basicConfig(level=lg.DEBUG)
 class Card:
     """A card in the standard deck of crazy8, poker and so forth."""
 
-    suits = "♠♥♣♦"
+    # suits = "♠♥♣♦" 
+    suits = "shcd" # used for debugging. switch with line on top for release
 
     def __init__(self, representation):
         """Can be initialized with a representation as string or int:

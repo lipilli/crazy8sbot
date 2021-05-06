@@ -1,4 +1,14 @@
+from enum import Enum
+
 """Contains all constants"""
+
+# Game constants
+
+MoveOutcome = Enum(
+    "MoveOutcome", 
+    "valid_move round_won game_won invalid_move")
+
+# Bot constants
 
 BOT_TOKEN = "1665894053:AAHxd8VUNhV1Q8ncLrF9IvljRPcGG9zfH60"
 TESTB0T_TOKEN1 = "1796005782:AAH50veupoTsA4KbrKv9A7ZndiO0CCewa9g"
