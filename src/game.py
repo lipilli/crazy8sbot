@@ -19,7 +19,13 @@ class Game:
         self.hands = {}
         self.deck = [Card(value) for value in range(52)]
         random.shuffle(self.deck)
+        self.rounds = []
         self.stack = [self.deck.pop()]
+
+        # 8 cant be the first card on stack
+        while self.top_of_stack().get_rank() == 8:
+            self.stack.append(self.deck.pop())
+
         lg.debug(f"the stack is:{[str(card) for card in self.stack]}")
 
         for player in players:
@@ -32,7 +38,10 @@ class Game:
             self.hands[player] = hand
 
             lg.debug(f"dealt {[str(card) for card in hand]} to {player}")
-        
+    
+    def new_round(self):
+        return
+
     def play_move(self, player, card):
         hand = self.hands[player]
         if card in hand and valid_move(card, self.top_of_stack()):
