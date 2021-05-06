@@ -150,12 +150,27 @@ class Game:
 
         return keyboard
 
+    def can_move(self, player):
+        can_move = False
+
+        for card in self.hands[player]:
+            if valid_move(card, self.top_of_stack):
+                lg.debug(f"player {player} can move {str(card)}")
+                can_move = True
+
+        return can_move
+
+        # does all of the above in one line but is way less readable... :D
+        # return max([valid_move(card, self.top_of_stack) for card in self.hands[1]])
+
 def valid_move(card_played, card_on_stack):
     crazy8 = card_played.rank == 8
     rank_fits = card_played.rank == card_on_stack.rank
     suit_fits = card_played.suit == card_on_stack.suit
 
     return crazy8 or rank_fits or suit_fits
+
+
 # %%
 
 
