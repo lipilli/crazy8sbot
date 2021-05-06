@@ -24,6 +24,9 @@ class Game:
 
         # 8 cant be the first card on stack
         while self.top_of_stack().get_rank() == 8:
+            old_top = self.top_of_stack()
+            self.remove(old_top)
+            self.deck.insert(len(self.deck/2), old_top)
             self.stack.append(self.deck.pop())
 
         lg.debug(f"the stack is:{[str(card) for card in self.stack]}")
