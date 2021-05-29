@@ -14,12 +14,12 @@ keyboards = {
         ],
         "resize_keyboard": True
     },
-    # 'join': {
-    #     "keyboard": [
-    #         ["/join"]
-    #     ],
-    #     "resize_keyboard": True
-    # },
+    'join': {
+        "keyboard": [
+            ["/join"]
+        ],
+        "resize_keyboard": True
+    },
     # 'leave': {
     #     "keyboard": [
     #         ["/leave"]
@@ -28,7 +28,7 @@ keyboards = {
     # },
     'play': {
         "keyboard": [
-            ["/play"]
+            ["play"]
         ],
         "resize_keyboard": True
     }
@@ -44,48 +44,36 @@ conversation_states = {
 }
 
 messages = {
-    'welcome':"""
-    Hi! I am the crazy8s bot😜. 
-    Ready for a game of crazy eights?\n
-    To begin you must promote me to admin. Then add 1-4 players to the group in one batch.
-    """,
     'rules': """Here are the rules: 
-     - Cards you play must match the color or number of the card on the deck
-     
-     - The 8s are crazy! 
-     Play it at anytime and define a new color. 
-     The next player must play an 8 or a card of the same color
-     
+     - Every card (other than eight) you play must match the suit or denomination of the card on the deck 
+     - The eights are crazy! Play it at anytime and define a new suit. The next player must play an eight or a card of matching suit
      - If you can't play, draw cards until you can play
-     
      - If there is no card on the deck
-     
      - If the deck is empty and you can't play you are passed""",
-
     'rules_long': """Crazy 8s:
-    General:
-    - Goal: get more then 100 points
-    - Players: 2-5
-    - The player to get rid of all their cards first, wins the round
-
-    Card values:
-    - 8 = 50 points
-    - K, Q, J or 10 = 10 points
-    - Ace = 1 point
-    - All other: points = Card number
-
-    Start:
-    - Everyone gets 5 cards
-    - The one to joins first, begins
-    - Play in the order of joining the game
-    - The first card is never an 8
-
-    Play:
-    - Every card (other than eight) you play must match the suit or denomination of the card on the deck
-    - The eights are crazy! Play it at anytime and define a new suit. The next player must play an eight or a card of matching suit
-    - If you can't play, draw cards until you can play
-    - If there is no card on the deck
-    - If the deck is empty and you can't play you are passed
+        General:
+        - Goal: get more then 100 points
+        - Players: 2-5
+        - The player to get rid of all their cards first, wins the round
+    
+        Card values:
+        - 8 = 50 points
+        - K, Q, J or 10 = 10 points
+        - Ace = 1 point
+        - All other: points = Card number
+    
+        Start:
+        - Everyone gets 5 cards
+        - The one to joins first, begins
+        - Play in the order of joining the game
+        - The first card is never an 8
+    
+        Play:
+        - Every card (other than eight) you play must match the suit or denomination of the card on the deck
+        - The eights are crazy! Play it at anytime and define a new suit. The next player must play an eight or a card of matching suit
+        - If you can't play, draw cards until you can play
+        - If there is no card on the deck
+        - If the deck is empty and you can't play you are passed
     """,
     'start': """The 8s are loose 😲😲😲!
         Get ready for a game of crazy 8s!
