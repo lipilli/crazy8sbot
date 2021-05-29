@@ -90,35 +90,52 @@ def new_game(update, context):
     """
     sender = update.message.from_user
     logging.info(f"{sender.first_name} {sender.last_name} created the chat {update.message.chat.title}")
-    context.chat_data['players'] = [sender.id]
+    context.chat_data['players'] = {sender.id}
+    context.players_left = {}
+    context.chat_data['game'] = 'lobby'
     logging.info(f"Players initialized with {str(context.chat_data['players'])} ({sender.first_name} {sender.last_name})")
     context.bot.send_message(chat_id=update.effective_chat.id, text=messages['welcome'], reply_markup=keyboards['play'] )
     return conversation_states['lobby']
 
+
 def new_player(update, context):
-    want2play = [x.id for x in update.message.new_chat_members]
+    want2play = {x.id for x in update.message.new_chat_members}
+    logging.info(f"new member(s): {str(want2play)}")
+    # TODO remove for real application
     if 'players' not in context.chat_data:
         context.chat_data['players'] = want2play
     else:
-        context.chat_data['players'].extend(want2play)
-
-    logging.info(f"new member(s): {str(want2play)}")
-    context.chat_data['players'].extend(want2play)
+        context.chat_data['players'].update(want2play) # TODO remove for real application
     try:
         context.chat_data['players'].remove(context.bot.get_me().id)
     except: pass
-    current_players = [(str(player)+':'+context.bot.get_chat_member(update.message.chat.id,int(player)).user.first_name) for player in context.chat_data['players']]
+    current_players = get_current_players(update, context)
     logging.info(f"Currently in the lobby:\n {str(current_players)}")
     return conversation_states['lobby']
 
 
+def get_current_players(update, context):
+   return {(str(player) + ':' +
+         context.bot.get_chat_member(update.message.chat.id, int(player)).user.first_name)
+        for player in context.chat_data['players']}
 
 #TODO player left fkt
-def player_left():
+def player_left(update, context):
     """remove from players list
     When the last player leaves delete the chat in telegram and the context and delete the game
     """
-    pass
+    left = update.message.left_chat_member.id
+    if context.chat_data['game']=='lobby':
+        try:
+            players_before_leaving = get_current_players(update,context)
+            context.chat_data['players'].remove(left)
+            players_after_leaving = get_current_players(update,context)
+            logging.info(f"successfully removed {players_before_leaving.difference(players_after_leaving)}")
+        except:
+            logging.info("a not registered chat member left the group")
+            context.bot.send_message(chat_id=update.effective_chat.id,
+                                     text="Remember to next time create a grop only with me before adding more members to the chat.😉")
+
 
 #TODO delete game fkt
 def delete_game():
@@ -217,7 +234,9 @@ unknown_command_handler = MessageHandler(Filters.command, unknown_command)
 entry_point = [MessageHandler(Filters.status_update.chat_created, new_game),
                MessageHandler(Filters.status_update.new_chat_members, new_player)]
 states = { # TODO What if the person that created the chat leaves durin sb is in the lobby?
-    conversation_states['lobby']: [MessageHandler(Filters.status_update.new_chat_members, new_player), CommandHandler('play', start_game)], #@Cedric: this does not work
+    conversation_states['lobby']: [MessageHandler(Filters.status_update.new_chat_members, new_player),
+                                   MessageHandler(Filters.status_update.left_chat_member, player_left),
+                                   CommandHandler('play', start_game),],
     conversation_states['menu']: [CommandHandler('rules', rules),
                                    CommandHandler('ruleslong', rules_long),
                                    CommandHandler('score', score),
