@@ -76,24 +76,6 @@ new_chat_members
 left_chat_member
 '''
 
-#
-# class Crazy8sbot:
-#     def lobby(update, context):
-#         context.bot.send_message(chat_id=update.effective_chat.id,text=messages["rules"], reply_markup=keyboards['join'])
-#         return conversation_states['lobby']
-#
-#     def join(update, context, self):
-#         self.players.push(update.message.from_user.id)
-#         context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.from_user.first_name)
-#
-#
-#
-#     def play_card_keyboard(player):
-#         pass
-#
-#
-#     def deck_keyboard(player, suit):
-#         pass
 
 def new_game(update, context):
     """ triggered when a new group chat adds the bot, hence, starts a game
@@ -113,6 +95,24 @@ def new_game(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text=messages['welcome'], reply_markup=keyboards['play'] )
     return conversation_states['lobby']
 
+def new_player(update, context):
+    want2play = [x.id for x in update.message.new_chat_members]
+    if 'players' not in context.chat_data:
+        context.chat_data['players'] = want2play
+    else:
+        context.chat_data['players'].extend(want2play)
+
+    logging.info(f"new member(s): {str(want2play)}")
+    context.chat_data['players'].extend(want2play)
+    try:
+        context.chat_data['players'].remove(context.bot.get_me().id)
+    except: pass
+    current_players = [(str(player)+':'+context.bot.get_chat_member(update.message.chat.id,int(player)).user.first_name) for player in context.chat_data['players']]
+    logging.info(f"Currently in the lobby:\n {str(current_players)}")
+    return conversation_states['lobby']
+
+
+
 #TODO player left fkt
 def player_left():
     """remove from players list
@@ -128,14 +128,6 @@ def delete_game():
 def kick_players(update: update.Update, context: CallbackContext, wants2play: List[int]):
     #logging.info
     pass
-
-def new_player(update, context):
-    want2play = [x.id for x in update.message.new_chat_members]
-    context.chat_data['players'].extend(want2play) # TODO does this work? is players an object / pointer?
-    new_members = [(str(player)+':'+update.bot.get_member(player).user.first_name) for player in context.chat_data['players']]
-    logging.info(f"These players were added to the game:\n {str(new_members)}")
-    # toDO hand_out_cards(update, context)
-    return conversation_states['lobby']
 
 
 def hand_out_hands(update, context):
@@ -222,7 +214,8 @@ unknown_command_handler = MessageHandler(Filters.command, unknown_command)
 
 # from github https://github.com/FrtZgwL/CoronaBot/blob/master/corona_bot.py
 #persistence = PicklePersistence(filename="storage/bot_storage.pkl")
-entry_point = [MessageHandler(Filters.status_update.chat_created, new_game)]
+entry_point = [MessageHandler(Filters.status_update.chat_created, new_game),
+               MessageHandler(Filters.status_update.new_chat_members, new_player)]
 states = { # TODO What if the person that created the chat leaves durin sb is in the lobby?
     conversation_states['lobby']: [MessageHandler(Filters.status_update.new_chat_members, new_player), CommandHandler('play', start_game)], #@Cedric: this does not work
     conversation_states['menu']: [CommandHandler('rules', rules),
@@ -240,42 +233,8 @@ navigation = ConversationHandler(entry_point,
                                  persistent=False, # TODO do I need persistence?
                                  name="navigation")
 
-    # new_context = CallbackContext(self.dispatcher).args.append({self.players})
-    # so other handers can use it: https://python-telegram-bot.readthedocs.io/en/stable/telegram.ext.callbackcontext.html
-
-# class Crazy8sbot():
-#
-#     def __init__(self, bot_token):
-#         self.updater = Updater(token=bot_token, use_context=True)
-#         self.dispatcher = self.updater.dispatcher
-#         # self.dispatcher.add_handler(Crazy8sbot.start_handler)
-#         self.updater.start_polling()
-#         self.dispatcher.add_handler(Crazy8sbot.menu_navigation)
-#
-#     def start(update, context):
-#         context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!")
-#         return 0
-#
-#     def __init__(self, bot_token):
-#         self.updater = Updater(token=bot_token, use_context=True)
-#         self.dispatcher = self.updater.dispatcher
-#         # self.dispatcher.add_handler(Crazy8sbot.start_handler)
-#         self.updater.start_polling()
-#         self.dispatcher.add_handler(Crazy8sbot.menu_navigation)
-#
-#     entry_points = [MessageHandler(Filters.regex('Hello crazy8sbot'), start)]
-#     states = {
-#         conversation_states['lobby']: [MessageHandler(Filters.regex('Hello crazy8sbot'), start)]
-#         }
-#     fallbacks = []
-#     menu_navigation = ConversationHandler(entry_points, states, fallbacks, persistent=False, name="menu_navigation")
 
 def main():
-    # TODO kann eigentlich beides in den kontext
-    game = 0
-    players = 0
-    players_left = 0
-
     updater = Updater(token=BOT_TOKEN, use_context=True)
     dispatcher = updater.dispatcher
 
@@ -290,9 +249,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    #my_game = Game(players=my_list)
-
-    # def start(update, context):
-    #     context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!")
-    #
-    #
