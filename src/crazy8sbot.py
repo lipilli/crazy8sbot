@@ -97,6 +97,10 @@ def new_game(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text=messages['welcome'], reply_markup=keyboards['play'] )
     return conversation_states['lobby']
 
+def get_current_players(update, context):
+   return {(str(player) + ':' +
+         context.bot.get_chat_member(update.message.chat.id, int(player)).user.first_name)
+        for player in context.chat_data['players']}
 
 def new_player(update, context):
     want2play = {x.id for x in update.message.new_chat_members}
@@ -112,12 +116,6 @@ def new_player(update, context):
     current_players = get_current_players(update, context)
     logging.info(f"Currently in the lobby:\n {str(current_players)}")
     return conversation_states['lobby']
-
-
-def get_current_players(update, context):
-   return {(str(player) + ':' +
-         context.bot.get_chat_member(update.message.chat.id, int(player)).user.first_name)
-        for player in context.chat_data['players']}
 
 #TODO player left fkt
 def player_left(update, context):
@@ -142,18 +140,15 @@ def delete_game():
     """deletes a game from all games"""
     pass
 
-def kick_players(update: update.Update, context: CallbackContext, wants2play: List[int]):
-    #logging.info
-    pass
 
 
 def hand_out_hands(update, context):
     pass
 
 
-def start_game(update, context):
+def start_game(update, context): # TODo, just send a message
     players = context.chat_data['players']
-    if (len(players) < 5):
+    if (len(players) < 6):
         context.chat_data['game'] = Game(players)
         hand_out_hands(update, context)
         return conversation_states['play']
