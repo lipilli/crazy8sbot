@@ -8,3 +8,5 @@ bot.log
 .vscode/
 src/__pycache__/
 testbot*
+src/message.json
+src/protokoll-2020-05-06.md
