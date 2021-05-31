@@ -39,11 +39,12 @@ keyboards = {
 
 conversation_states = {
     'lobby': 0,
-    'deck_page1': 1,
-    'deck_page2': 2,
-    'deck_page3': 3,
-    'deck_page4': 4,
-    'menu': 5
+    'play': 1,
+    'deck_page1': 2,
+    'deck_page2': 3,
+    'deck_page3': 4,
+    'deck_page4': 5,
+    'menu': 6
 }
 
 messages = {

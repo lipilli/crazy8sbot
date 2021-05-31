@@ -20,6 +20,7 @@ import logging as lg
 
 # custom modules
 from constants import messages, conversation_states, keyboards, BOT_TOKEN
+from card import Card
 from game import Game
 
 # setup lg
@@ -31,10 +32,29 @@ lg.basicConfig( format='%(asctime)s - %(levelname)s - %(message)s', level=lg.DEB
 # TODO: Keyboard
 # TODO: Classes: players, game (players, rounds, score):
 # TODO: score
-# TODO: create 2 extrabots
 # TODO: Figure out when to use lg.debug and when to use logging.info
 # TODO: ask cedric: when do you use info and when debug?
 # TODO: Hand out hands, play card, multi level keyboard
+
+'''Goal
+Basic game playable
+- Track the order ppl play in and call ppl out that want to play at the wrong turn
+- I must be able to check if the card is an 8 → send ask for a color how does that work in the game? 
+- Tell what card is on the stack 
+- draw card functionality -> check if they can draw (they must draw until they can play) 
+- You must lay a card to complete your tun 
+- If sb reachse 100 pts → End the round → display score → begiin new round
+
+- display the score: make a pic? → simplest thing is just a simple 100 - Jen ... 
+- check if stack is empty?
+
+
+
+
+- check if ppl have the same name, if yes display their username, other ways put numbers on their names 
+
+
+'''
 
 '''
 Creates Keyboards on the fly
@@ -97,10 +117,11 @@ def new_game(update, context):
     lg.info(f"Players initialized with {str(context.chat_data['players'])} ({sender.first_name} {sender.last_name})")
     context.bot.send_message(chat_id=update.effective_chat.id, text=messages['welcome'], reply_markup=keyboards['play'] )
     return conversation_states['lobby']
-
+def get_user_from_id(update, context, user_id):
+    return context.bot.get_chat_member(update.message.chat.id, int(user_id)).user
 def get_current_players(update, context):
    return {(str(player) + ':' +
-         context.bot.get_chat_member(update.message.chat.id, int(player)).user.first_name)
+         get_user_from_id(update, context, int(player)).first_name) #TODO is int necessary here?  also test
         for player in context.chat_data['players']}
 
 def new_player(update, context):
@@ -171,6 +192,13 @@ def hand_out_hands(update, context):
     can I have multiple different conversation states with different users in the chat?
 
     """
+def tell_turn(update, context):
+    try:
+        context.bot.send_message(chat_id=update.effective_chat.id, text="Its your turn ")
+    except:
+        pass
+
+def tell_deck(update,context):
 
 
 def start_game(update, context): # TODo, just send a message
@@ -186,6 +214,7 @@ def start_game(update, context): # TODo, just send a message
         my_game = context.chat_data['game'] # TODO ask cedric: is that an object copy here?
         hand_out_hands(update, context)
         lg.info(f"Game initialized \nHands: \n {[str(player)+':'+ str([str(card) for card in my_game.get_hand(player)]) for player in players]}") # TODO facilitate this here whith a function that returns the deck as a string
+
         return conversation_states['play']
     else:
         context.bot.send_message(chat_id=update.effective_chat.id, text=f"Sorry, you have too many players 😥. {len(players)-5} members must leave the group.")
@@ -197,6 +226,14 @@ def start_game(update, context): # TODo, just send a message
 #     context.bot.send_message(chat_id=update.message.from_user.id, text=update.message.from_user.first_name)
 
 def play_card (update, context):
+    move = update.message.text
+    player = update.message.from_user.id
+    game = context.chat_data['game']
+
+    if player != context.chat_data['turn']:
+        context.bot.send_message(chat_id=update.effectife_chat.id, text="I'm sorry but it's not your turn 😕")
+    else:
+      game.play_move(player, Card(move))
     """
     i = (i+1) % 5
 
