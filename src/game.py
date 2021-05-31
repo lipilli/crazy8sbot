@@ -1,11 +1,10 @@
-# %%
 import random
 import logging as lg
 from card import Card
 
 lg.basicConfig(level=lg.DEBUG)
 
-# %%
+
 class Game:
     """Manages game states, player hands and so forth.
 
@@ -15,7 +14,7 @@ class Game:
     
     A hand is a set of cards."""
 
-    def __init__(self, *players):
+    def __init__(self, players: list):
         self.hands = {}
         self.deck = [Card(value) for value in range(52)]
         random.shuffle(self.deck)
@@ -30,7 +29,7 @@ class Game:
             self.hands[player] = hand
 
             lg.debug(f"dealt {[str(card) for card in hand]} to {player}")
-        
+
     def play_move(self, player, card):
         hand = self.hands[player]
         if card in hand:
@@ -45,14 +44,11 @@ class Game:
 
     def get_score(self, player):
         return 21
-    
+
     def draw(self, player):
-        if len(deck) > 0:
+        if len(self.deck) > 0:
             card = self.deck.pop()
             self.hands[player].add(card)
             return True
         else:
             return False
-
-# %%
-

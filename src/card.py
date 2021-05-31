@@ -1,4 +1,3 @@
-# %%
 class Card:
     """A card in the standard deck of crazy8, poker and so forth."""
 
@@ -33,4 +32,4 @@ class Card:
 
     def get_rank(self):
         return int((self.value - self.value % 4) / 4 + 2)
-# %%
+

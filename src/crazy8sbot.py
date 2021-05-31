@@ -16,15 +16,15 @@ from telegram import  update
 from typing import List
 
 
-import logging
+import logging as lg
 
 # custom modules
 from constants import messages, conversation_states, keyboards, BOT_TOKEN
 from game import Game
 
-# setup logging
+# setup lg
 # source: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Extensions-%E2%80%93-Your-first-Bot
-logging.basicConfig( format='%(asctime)s - %(levelname)s - %(message)s', level=logging.DEBUG)
+lg.basicConfig( format='%(asctime)s - %(levelname)s - %(message)s', level=lg.DEBUG)
 
 # TODO: command handlers: start, join, play, score, help rules, endgame, killbot
 # TODO: Message handlers: lay cards, curse words / emojis
@@ -32,8 +32,9 @@ logging.basicConfig( format='%(asctime)s - %(levelname)s - %(message)s', level=l
 # TODO: Classes: players, game (players, rounds, score):
 # TODO: score
 # TODO: create 2 extrabots
-
-
+# TODO: Figure out when to use lg.debug and when to use logging.info
+# TODO: ask cedric: when do you use info and when debug?
+# TODO: Hand out hands, play card, multi level keyboard
 
 '''
 Creates Keyboards on the fly
@@ -89,11 +90,11 @@ def new_game(update, context):
         test: TODO ask if we need this here
     """
     sender = update.message.from_user
-    logging.info(f"{sender.first_name} {sender.last_name} created the chat {update.message.chat.title}")
+    lg.info(f"{sender.first_name} {sender.last_name} created the chat {update.message.chat.title}")
     context.chat_data['players'] = {sender.id}
     context.players_left = {}
     context.chat_data['game'] = 'lobby'
-    logging.info(f"Players initialized with {str(context.chat_data['players'])} ({sender.first_name} {sender.last_name})")
+    lg.info(f"Players initialized with {str(context.chat_data['players'])} ({sender.first_name} {sender.last_name})")
     context.bot.send_message(chat_id=update.effective_chat.id, text=messages['welcome'], reply_markup=keyboards['play'] )
     return conversation_states['lobby']
 
@@ -104,17 +105,21 @@ def get_current_players(update, context):
 
 def new_player(update, context):
     want2play = {x.id for x in update.message.new_chat_members}
-    logging.info(f"new member(s): {str(want2play)}")
+    lg.info(f"new member(s): {str(want2play)}")
     # TODO remove for real application
     if 'players' not in context.chat_data:
         context.chat_data['players'] = want2play
+        context.players_left = {}
+        context.chat_data['game'] = 'lobby'
+        context.chat_data['turn'] = 0
+
     else:
         context.chat_data['players'].update(want2play) # TODO remove for real application
     try:
         context.chat_data['players'].remove(context.bot.get_me().id)
     except: pass
     current_players = get_current_players(update, context)
-    logging.info(f"Currently in the lobby:\n {str(current_players)}")
+    lg.info(f"Currently in the lobby:\n {str(current_players)}")
     return conversation_states['lobby']
 
 #TODO player left fkt
@@ -128,9 +133,9 @@ def player_left(update, context):
             players_before_leaving = get_current_players(update,context)
             context.chat_data['players'].remove(left)
             players_after_leaving = get_current_players(update,context)
-            logging.info(f"successfully removed {players_before_leaving.difference(players_after_leaving)}")
+            lg.info(f"successfully removed {players_before_leaving.difference(players_after_leaving)}")
         except:
-            logging.info("a not registered chat member left the group")
+            lg.info("a not registered chat member left the group")
             context.bot.send_message(chat_id=update.effective_chat.id,
                                      text="Remember to next time create a grop only with me before adding more members to the chat.😉")
 
@@ -141,27 +146,70 @@ def delete_game():
     pass
 
 
+def create_keyboard(hand):
+    # Returns a
+
+    """ Returns a keboard like this just with the specific cards of a player
+    keyboard = {
+    "keyboard": [
+        ["/rules", "/ruleslong", "/score"],
+        ["/sudfhuhs", "/dasd", "/hkjklj"],
+    ],
+    "resize_keyboard": True,
+    "selective" : True
+    }
+
+    I need the pages 2-4 as well
+    """
 
 def hand_out_hands(update, context):
-    pass
+    """
+    Get array of players
+    for each player create keyboard
+    send reply markup to every player
+    create multilevel keyboard, how do I do that again?
+    can I have multiple different conversation states with different users in the chat?
+
+    """
 
 
 def start_game(update, context): # TODo, just send a message
     players = context.chat_data['players']
-    if (len(players) < 6):
-        context.chat_data['game'] = Game(players)
+    # Only the case if the bot is the only on in the group or the group was opened wrong and has unregistered players
+    if len(players) == 0:
+        context.bot.send_message(chat_id=update.effective_chat.id, text=messages['group_opened_wrong'])
+        context.bot.leaveChat(update.effective_chat.id)
+    elif len(players)==1:
+        context.bot.send_message(chat_id=update.effective_chat.id, text="Please add more players. 🙃")
+    elif len(players) < 6:
+        context.chat_data['game'] = Game(list(players))
+        my_game = context.chat_data['game'] # TODO ask cedric: is that an object copy here?
         hand_out_hands(update, context)
+        lg.info(f"Game initialized \nHands: \n {[str(player)+':'+ str([str(card) for card in my_game.get_hand(player)]) for player in players]}") # TODO facilitate this here whith a function that returns the deck as a string
         return conversation_states['play']
     else:
-        # todo send message: yall x ppl gotta leave 
+        context.bot.send_message(chat_id=update.effective_chat.id, text=f"Sorry, you have too many players 😥. {len(players)-5} members must leave the group.")
         return conversation_states['lobby']
 
-    # TODO:kick_all_ecess_players(bot)
-    pass
 
 # def join(update, context):
 #     #self.players.push(update.message.from_user.id)
 #     context.bot.send_message(chat_id=update.message.from_user.id, text=update.message.from_user.first_name)
+
+def play_card (update, context):
+    """
+    i = (i+1) % 5
+
+    How do I track who's turn it is
+
+
+    check if it is your turn → store in context[next turn or sth]
+    check I f I can play the card
+    If not tell them they can't play rn
+
+
+    """
+
 
 def play_card_keyboard(player):
     pass
@@ -232,10 +280,12 @@ states = { # TODO What if the person that created the chat leaves durin sb is in
     conversation_states['lobby']: [MessageHandler(Filters.status_update.new_chat_members, new_player),
                                    MessageHandler(Filters.status_update.left_chat_member, player_left),
                                    CommandHandler('play', start_game),],
+    conversation_states['play']: [MessageHandler(Filters.regex('[♠♥♣♦]((\d\d?)|[JQKA])'), play_card)],
     conversation_states['menu']: [CommandHandler('rules', rules),
                                    CommandHandler('ruleslong', rules_long),
                                    CommandHandler('score', score),
                                    CommandHandler('help', bot_help)],
+
      conversation_states['deck_page1']:[]
     # conversation_states['deck_page2']:[],
     # conversation_states['deck_page3']:[],
