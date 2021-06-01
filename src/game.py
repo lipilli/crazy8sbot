@@ -1,7 +1,6 @@
 import random
 import logging as lg
 from card import Card
-
 lg.basicConfig(level=lg.DEBUG)
 
 

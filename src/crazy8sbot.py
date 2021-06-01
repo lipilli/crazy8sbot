@@ -193,13 +193,29 @@ def hand_out_hands(update, context):
 
     """
 def tell_turn(update, context):
-    try:
-        context.bot.send_message(chat_id=update.effective_chat.id, text="Its your turn ")
-    except:
-        pass
+    players = list(context.chat_data['players'])
+    at_turn = context.chat_data['turn']
+    player_at_turn = players[at_turn]
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text="Its your turn "+player_at_turn.first_name+" "+ player_at_turn.lastname)
+
 
 def tell_deck(update,context):
+    card_on_stack = str(context.chat_data['game'].top_of_stack)
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text=f"{card_on_stack} is on the stack")
 
+
+def hands_log_str(update, context):
+    players = context.chat_data['players']
+    my_game = context.chat_data['game']
+    hands_log = "Hands:\n"
+    for player in players:
+        hand = str(player) \
+               + "(" + get_user_from_id(update, context, player).username + ")" \
+               + ':' + str([str(card) for card in my_game.get_hand(player)]) + "\n"
+        hands_log = hands_log + hand
+    return hands_log
 
 def start_game(update, context): # TODo, just send a message
     players = context.chat_data['players']
@@ -213,8 +229,9 @@ def start_game(update, context): # TODo, just send a message
         context.chat_data['game'] = Game(list(players))
         my_game = context.chat_data['game'] # TODO ask cedric: is that an object copy here?
         hand_out_hands(update, context)
-        lg.info(f"Game initialized \nHands: \n {[str(player)+':'+ str([str(card) for card in my_game.get_hand(player)]) for player in players]}") # TODO facilitate this here whith a function that returns the deck as a string
-
+        lg.info(f"Game initialized {hands_log_str(update, context)}") # TODO facilitate this here whith a function that returns the deck as a string
+        tell_deck(update, context)
+        tell_turn(update, context)
         return conversation_states['play']
     else:
         context.bot.send_message(chat_id=update.effective_chat.id, text=f"Sorry, you have too many players 😥. {len(players)-5} members must leave the group.")
@@ -226,6 +243,11 @@ def start_game(update, context): # TODo, just send a message
 #     context.bot.send_message(chat_id=update.message.from_user.id, text=update.message.from_user.first_name)
 
 def play_card (update, context):
+    players = list(context.chat_data['players'])
+    at_turn = context.chat_data['turn']
+    made_move = update.message.from_user.id
+    ## if players[at_turn] == made_move:
+
     move = update.message.text
     player = update.message.from_user.id
     game = context.chat_data['game']
