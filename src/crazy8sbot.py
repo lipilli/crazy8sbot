@@ -124,6 +124,7 @@ def new_game(update, context):
     context.chat_data['game'] = 'lobby'
     lg.info(f"Players initialized with {str(context.chat_data['players'])} ({get_users_name_from_id(update, context, sender)})")
     context.bot.send_message(chat_id=update.effective_chat.id, text=messages['welcome'], reply_markup=keyboards['play'])
+
     return conversation_states['lobby']
 
 
@@ -308,6 +309,7 @@ def play_card(update, context):
             context.chat_data["turn"] = (context.chat_data["turn"] + 1) % len(context.chat_data['players'])
             tell_deck(update, context)
             tell_turn(update,context)
+
             return['play']
 
         elif move_return == MoveOutcome.round_won:
@@ -328,10 +330,12 @@ def play_card(update, context):
             leave_chat(update, context)
             return ['play']
 
+
         elif move_return == MoveOutcome.invalid_move:
             context.bot.send_message(chat_id=update.effective_chat.id,
                                      text="I'm sorry this move is not valid")
             return ['play']
+
 
     else:
         context.bot.send_message(chat_id=update.effective_chat.id, text="I'm sorry but it's not your turn 😕")
