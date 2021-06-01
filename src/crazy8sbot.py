@@ -157,6 +157,7 @@ def new_player(update, context):
         context.chat_data['players'].remove(context.bot.get_me().id)
     except KeyError:
         pass #TODO do I need finally?
+
     current_players = get_current_players(update, context)
     lg.info(f"Currently in the lobby:\n {str(current_players)}")
     return conversation_states['lobby']
@@ -221,6 +222,7 @@ def tell_turn(update, context):
     player_at_turn = get_users_name_from_id(update, context, players[at_turn])
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text="It's your turn " + player_at_turn)
+
 
 
 def tell_deck(update, context):
@@ -288,6 +290,7 @@ def play_card(update, context):
     else:
         game.play_move(player, Card(move))
         context.chat_data["turn"] = (context.chat_data["turn"] + 1)%5
+
     """
     check if it is your turn → store in context[next turn or sth]
     check I f I can play the card
@@ -328,7 +331,6 @@ def rules_long(update, context):
 def score(update, context):
     pass
 
-#TODO do I need this?
 def stop(update, context):  # nur admin
     context.bot.send_message(chat_id=update.effective_chat.id, text="See ya 😋")
     ##delete game instance
