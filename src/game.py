@@ -22,7 +22,7 @@ class Game:
         self.scores = dict([(player, 0) for player in players])
         self.players = players
         self.round_over = True
-        
+        # TODO get a table with the players names and scores: https://stackoverflow.com/questions/35634238/how-to-save-a-pandas-dataframe-table-as-a-png
     
     def new_round(self):
         """Start a new round. That means resetting deck and stack and dealing cards to all players."""

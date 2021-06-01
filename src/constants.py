@@ -8,8 +8,8 @@ MoveOutcome = Enum(
     "MoveOutcome", 
     "valid_move round_won game_won invalid_move")
 
-# suits = "♠♥♣♦" 
-suits = "shcd" # used for debugging. switch with line on top for release
+suits = "♠♥♣♦"
+# suits = "shcd" # used for debugging. switch with line on top for release
 
 # Bot constants
 
