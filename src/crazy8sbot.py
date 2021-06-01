@@ -195,9 +195,9 @@ def hand_out_hands(update, context):
 def tell_turn(update, context):
     players = list(context.chat_data['players'])
     at_turn = context.chat_data['turn']
-    player_at_turn = players[at_turn]
+    player_at_turn = get_user_from_id(update, context, players[at_turn])
     context.bot.send_message(chat_id=update.effective_chat.id,
-                             text="Its your turn "+player_at_turn.first_name+" "+ player_at_turn.lastname)
+                             text="Its your turn "+player_at_turn.first_name+" "+ player_at_turn.last_name)
 
 
 def tell_deck(update,context):
@@ -226,11 +226,15 @@ def start_game(update, context): # TODo, just send a message
     elif len(players)==1:
         context.bot.send_message(chat_id=update.effective_chat.id, text="Please add more players. 🙃")
     elif len(players) < 6:
+        # my_game = context.chat_data['game'] TODO ask cedric this don't work right?
+        # my_game = Game(list(players))
+
+        # initialize the game
         context.chat_data['game'] = Game(list(players))
-        my_game = context.chat_data['game'] # TODO ask cedric: is that an object copy here?
-        hand_out_hands(update, context)
+        context.chat_data['game'].new_round()
+        #TODO hand_out_hands(update, context) ask cedric
         lg.info(f"Game initialized {hands_log_str(update, context)}") # TODO facilitate this here whith a function that returns the deck as a string
-        tell_deck(update, context)
+
         tell_turn(update, context)
         return conversation_states['play']
     else:
