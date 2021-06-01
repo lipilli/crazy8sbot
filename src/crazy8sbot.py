@@ -107,7 +107,7 @@ def new_game(update, context):
         test: TODO ask if we need this here
     """
     sender = update.message.from_user.id
-    lg.info(f"{get_users_name_from_id(update, context, sender.id)} created the chat {update.message.chat.title}")
+    lg.info(f"{get_users_name_from_id(update, context, sender)} created the chat {update.message.chat.title}")
     context.chat_data['players'] = {sender}
     context.players_left = {}
     context.chat_data['game'] = 'lobby'
@@ -371,10 +371,11 @@ def make_hand_keyboard(game, player, page):
 
     keyboard = {
         "keyboard":  [
-            ["Draw"],
-            [hs[0],hs[1],hs[2],"menu"],
-            [hs[3],hs[4],hs[5], "←"],
-            [hs[6],hs[7],hs[8], "→"]
+            ["/draw"],
+            [hs[0],hs[1],hs[2],hs[3],hs[4]],
+            [hs[5],hs[6],hs[7],hs[8],hs[9]],
+            [hs[10],hs[11],hs[12],hs[13],hs[14]],
+            [hs[15],hs[16],hs[17],hs[18],hs[19]]
         ],
         "resize_keyboard": True,
         "selective" : True
