@@ -4,6 +4,7 @@ import constants
 
 lg.basicConfig(level=lg.DEBUG)
 
+
 class Card:
     """A card in the standard deck of crazy8, poker and so forth."""
 
@@ -92,7 +93,7 @@ class Card:
     def rank(self):
         """Return rank of card as integer. A will be 1, J 11, K 12, Q 13."""
         return int((self.int_representation - self.int_representation % 4) / 4 + 1)
-
+        # return int((self.value - self.value % 4) / 4 + 2)
     def get_score(self):
         """Output: Crazy8s score value for this card"""
         rank = self.rank
@@ -105,5 +106,3 @@ class Card:
 
         else:
             return rank
-
-# %%

@@ -1,4 +1,3 @@
-# %%
 import random
 import logging as lg
 from card import Card
@@ -15,7 +14,7 @@ class Game:
     
     A hand is a set of cards."""
 
-    def __init__(self, *players):
+    def __init__(self,players:list):
         """Initialize the game but don't start it yet.
 
         Input:
@@ -52,6 +51,7 @@ class Game:
             self.hands[player] = hand
 
             lg.debug(f"dealt {[str(card) for card in hand]} to {player}")
+
 
     @property
     def leading_player(self):
@@ -120,6 +120,7 @@ class Game:
     def get_hand(self, player):
         return self.hands[player]
 
+
     def get_hand_score(self, player):
         return sum([card.get_score() for card in self.hands[player]])
 
@@ -142,6 +143,7 @@ class Game:
             lg.debug(f"player {player} tried to draw but the deck was empty")
             lg.debug(f"the stack is:{[str(card) for card in self.stack]}")
             return False
+
 
     def can_move(self, player):
         """Returns true if there is a valid move for the specified player."""

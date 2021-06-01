@@ -16,6 +16,9 @@ suits = "shcd" # used for debugging. switch with line on top for release
 BOT_TOKEN = "1665894053:AAHxd8VUNhV1Q8ncLrF9IvljRPcGG9zfH60"
 TESTB0T_TOKEN1 = "1796005782:AAH50veupoTsA4KbrKv9A7ZndiO0CCewa9g"
 TESTBOT_TOKEN2 = "1792398859:AAGoeCc9y2GX3MsUaHPRd0f2I9_lLxTUFgA"
+TESTBOT_TOKEN3 = "1897111191:AAFvK3sB-9bdd-alOPWaWYTzzWKp5sGGy4w"
+TESTBOT_TOKEN4 = "1879219956:AAH5bpXKl1yxyCEwsZ953sS5mc4DO9RHGbw"
+
 
 keyboards = {
     'menu': {
@@ -49,14 +52,17 @@ keyboards = {
 
 conversation_states = {
     'lobby': 0,
-    'deck_page1': 1,
-    'deck_page2': 2,
-    'deck_page3': 3,
-    'deck_page4': 4,
-    'menu': 5
+    'play': 1,
+    'deck_page1': 2,
+    'deck_page2': 3,
+    'deck_page3': 4,
+    'deck_page4': 5,
+    'menu': 6
 }
 
 messages = {
+    'group_opened_wrong':"""The group for this game was not created correctly. 🤔 
+    To play a game, create a new group with only you and me. Then add all other players and press play.""",
     'welcome':"""
     Hi! I am the crazy8s bot😜. 
     Ready for a game of crazy eights?\n

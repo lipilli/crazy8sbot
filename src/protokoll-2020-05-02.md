@@ -48,7 +48,6 @@ Man hat max 33 Karten auf der hand: --> 4 Seiten
 *Keyboards an bestimmte User senden*
 keyboard = {
     "keyboard": [
-          # TODO Groupadmin can't leave the game
         ["/rules", "/ruleslong", "/score"],
         ["/sudfhuhs", "/dasd", "/hkjklj"],
     ],
