@@ -17,7 +17,7 @@ from typing import List
 import logging as lg
 
 # custom modules
-from constants import messages, conversation_states, keyboards, BOT_TOKEN
+from constants import messages, conversation_states, keyboards, BOT_TOKEN, hand_filler
 from card import Card
 from game import Game
 
@@ -353,6 +353,34 @@ def bot_help(update, context):
 def unknown_command(update, context):
     # source https://github.com/python-telegram-bot/python-telegram-bot/issues/801
     context.bot.send_message(chat_id=update.effective_chat.id, text="I'm sorry but I don't know that command😟.")
+
+
+def make_hand_keyboard(game, player, page):
+    sorted_hand = sorted(game.get_hand(player))
+    
+    # requested page has no cards
+    if page * 9 > len(sorted_hand): 
+        hand_section = [hand_filler for i in range(9)]
+    # requested page has some cards
+    else:
+        hand_section = sorted_hand[page * 9:]
+        hand_section.extend([hand_filler for i in range(9-len(hand_section))])
+
+    hand_section = [str(card) for card in hand_section]
+    hs = hand_section # shorter name
+
+    keyboard = {
+        "keyboard":  [
+            ["Draw"],
+            [hs[0],hs[1],hs[2],"menu"],
+            [hs[3],hs[4],hs[5], "←"],
+            [hs[6],hs[7],hs[8], "→"]
+        ],
+        "resize_keyboard": True,
+        "selective" : True
+    }
+
+    return keyboard
 
 
 # Handlers

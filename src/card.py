@@ -84,6 +84,10 @@ class Card:
     def __hash__(self):
         return self.int_representation
     
+    def __lt__(self, other):
+        """Implementation of less than for cards. Neccessary to be able to sort cards with sorted([card1, card2, card3])"""
+        return int(self) < int(other)
+    
     @property
     def suit(self):
         """Return rank of card as a string. These ranks are defined in constants.rank"""
@@ -106,3 +110,4 @@ class Card:
 
         else:
             return rank
+# %%
