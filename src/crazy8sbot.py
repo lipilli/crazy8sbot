@@ -10,11 +10,9 @@ Add this bot to your telegram group and play crazy eights with your friends.
 
 """
 
-
 from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters, CallbackContext
-from telegram import  update
+from telegram import update
 from typing import List
-
 
 import logging as lg
 
@@ -25,7 +23,7 @@ from game import Game
 
 # setup lg
 # source: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Extensions-%E2%80%93-Your-first-Bot
-lg.basicConfig( format='%(asctime)s - %(levelname)s - %(message)s', level=lg.DEBUG)
+lg.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=lg.DEBUG)
 
 # TODO: command handlers: start, join, play, score, help rules, endgame, killbot
 # TODO: Message handlers: lay cards, curse words / emojis
@@ -85,7 +83,6 @@ Worst case Szenario
 
 '''
 
-
 '''
 TODO: Join/Leave events of members:
 - Array: add when sb joins, pop when someone leaves
@@ -109,20 +106,40 @@ def new_game(update, context):
             context:
         test: TODO ask if we need this here
     """
-    sender = update.message.from_user
-    lg.info(f"{sender.first_name} {sender.last_name} created the chat {update.message.chat.title}")
-    context.chat_data['players'] = {sender.id}
+    sender = update.message.from_user.id
+    lg.info(f"{get_users_name_from_id(update, context, sender.id)} created the chat {update.message.chat.title}")
+    context.chat_data['players'] = {sender}
     context.players_left = {}
     context.chat_data['game'] = 'lobby'
-    lg.info(f"Players initialized with {str(context.chat_data['players'])} ({sender.first_name} {sender.last_name})")
-    context.bot.send_message(chat_id=update.effective_chat.id, text=messages['welcome'], reply_markup=keyboards['play'] )
+    lg.info(
+        f"Players initialized with {str(context.chat_data['players'])} ({get_users_name_from_id(update, context, sender)})")
+    context.bot.send_message(chat_id=update.effective_chat.id, text=messages['welcome'], reply_markup=keyboards['play'])
     return conversation_states['lobby']
+
+
 def get_user_from_id(update, context, user_id):
     return context.bot.get_chat_member(update.message.chat.id, int(user_id)).user
+
+
+def get_users_name_from_id(update, context, user_id):
+    user = get_user_from_id(update, context, user_id)
+    try:
+        return user.username
+    except TypeError:
+        try:  # user has no username
+            return user.first_name + " " + user.last_name
+        except TypeError:  # user has no last name
+            try:
+                return user.first_name
+            finally:  # TODO what do you do
+                return "panini head"
+
+
 def get_current_players(update, context):
-   return {(str(player) + ':' +
-         get_user_from_id(update, context, int(player)).first_name) #TODO is int necessary here?  also test
-        for player in context.chat_data['players']}
+    return {str(player) + ':' +
+            get_users_name_from_id(update, context, player)  # TODO is int necessary here?  also test maybe i need "()" here I rempved them
+            for player in context.chat_data['players']}
+
 
 def new_player(update, context):
     want2play = {x.id for x in update.message.new_chat_members}
@@ -135,38 +152,41 @@ def new_player(update, context):
         context.chat_data['turn'] = 0
 
     else:
-        context.chat_data['players'].update(want2play) # TODO remove for real application
+        context.chat_data['players'].update(want2play)  # TODO remove for real application
     try:
         context.chat_data['players'].remove(context.bot.get_me().id)
-    except: pass
+    except KeyError:
+        pass #TODO do I need finally?
     current_players = get_current_players(update, context)
     lg.info(f"Currently in the lobby:\n {str(current_players)}")
     return conversation_states['lobby']
 
-#TODO player left fkt
+
+# TODO player left fkt
 def player_left(update, context):
     """remove from players list
     When the last player leaves delete the chat in telegram and the context and delete the game
     """
     left = update.message.left_chat_member.id
-    if context.chat_data['game']=='lobby':
+    if context.chat_data['game'] == 'lobby':
         try:
-            players_before_leaving = get_current_players(update,context)
+            players_before_leaving = get_current_players(update, context)
             context.chat_data['players'].remove(left)
-            players_after_leaving = get_current_players(update,context)
+            players_after_leaving = get_current_players(update, context)
             lg.info(f"successfully removed {players_before_leaving.difference(players_after_leaving)}")
-        except:
+        except:  # TODO what error is this?
             lg.info("a not registered chat member left the group")
             context.bot.send_message(chat_id=update.effective_chat.id,
                                      text="Remember to next time create a grop only with me before adding more members to the chat.😉")
 
 
-#TODO delete game fkt
+# TODO delete game fkt
 def delete_game():
     """deletes a game from all games"""
     pass
 
 
+# TODO create keybord
 def create_keyboard(hand):
     # Returns a
 
@@ -183,6 +203,7 @@ def create_keyboard(hand):
     I need the pages 2-4 as well
     """
 
+
 def hand_out_hands(update, context):
     """
     Get array of players
@@ -192,15 +213,17 @@ def hand_out_hands(update, context):
     can I have multiple different conversation states with different users in the chat?
 
     """
+
+
 def tell_turn(update, context):
     players = list(context.chat_data['players'])
     at_turn = context.chat_data['turn']
-    player_at_turn = get_user_from_id(update, context, players[at_turn])
+    player_at_turn = get_users_name_from_id(update, context, players[at_turn])
     context.bot.send_message(chat_id=update.effective_chat.id,
-                             text="Its your turn "+player_at_turn.first_name+" "+ player_at_turn.last_name)
+                             text="It's your turn " + player_at_turn)
 
 
-def tell_deck(update,context):
+def tell_deck(update, context):
     card_on_stack = str(context.chat_data['game'].top_of_stack)
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text=f"{card_on_stack} is on the stack")
@@ -212,18 +235,19 @@ def hands_log_str(update, context):
     hands_log = "Hands:\n"
     for player in players:
         hand = str(player) \
-               + "(" + get_user_from_id(update, context, player).username + ")" \
+               + "(" + get_users_name_from_id(update, context, player) + ")" \
                + ':' + str([str(card) for card in my_game.get_hand(player)]) + "\n"
         hands_log = hands_log + hand
     return hands_log
 
-def start_game(update, context): # TODo, just send a message
+
+def start_game(update, context):  # TODo, just send a message
     players = context.chat_data['players']
     # Only the case if the bot is the only on in the group or the group was opened wrong and has unregistered players
     if len(players) == 0:
         context.bot.send_message(chat_id=update.effective_chat.id, text=messages['group_opened_wrong'])
         context.bot.leaveChat(update.effective_chat.id)
-    elif len(players)==1:
+    elif len(players) == 1:
         context.bot.send_message(chat_id=update.effective_chat.id, text="Please add more players. 🙃")
     elif len(players) < 6:
         # my_game = context.chat_data['game'] TODO ask cedric this don't work right?
@@ -232,13 +256,15 @@ def start_game(update, context): # TODo, just send a message
         # initialize the game
         context.chat_data['game'] = Game(list(players))
         context.chat_data['game'].new_round()
-        #TODO hand_out_hands(update, context) ask cedric
-        lg.info(f"Game initialized {hands_log_str(update, context)}") # TODO facilitate this here whith a function that returns the deck as a string
+        # TODO hand_out_hands(update, context) ask cedric
+        lg.info(
+            f"Game initialized {hands_log_str(update, context)}")  # TODO facilitate this here whith a function that returns the deck as a string
 
         tell_turn(update, context)
         return conversation_states['play']
     else:
-        context.bot.send_message(chat_id=update.effective_chat.id, text=f"Sorry, you have too many players 😥. {len(players)-5} members must leave the group.")
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text=f"Sorry, you have too many players 😥. {len(players) - 5} members must leave the group.")
         return conversation_states['lobby']
 
 
@@ -246,7 +272,7 @@ def start_game(update, context): # TODo, just send a message
 #     #self.players.push(update.message.from_user.id)
 #     context.bot.send_message(chat_id=update.message.from_user.id, text=update.message.from_user.first_name)
 
-def play_card (update, context):
+def play_card(update, context):
     players = list(context.chat_data['players'])
     at_turn = context.chat_data['turn']
     made_move = update.message.from_user.id
@@ -257,19 +283,15 @@ def play_card (update, context):
     game = context.chat_data['game']
 
     if player != context.chat_data['turn']:
+        #TODO do I need this? spam?
         context.bot.send_message(chat_id=update.effectife_chat.id, text="I'm sorry but it's not your turn 😕")
     else:
-      game.play_move(player, Card(move))
+        game.play_move(player, Card(move))
+        context.chat_data["turn"] = (context.chat_data["turn"] + 1)%5
     """
-    i = (i+1) % 5
-
-    How do I track who's turn it is
-
-
     check if it is your turn → store in context[next turn or sth]
     check I f I can play the card
     If not tell them they can't play rn
-
 
     """
 
@@ -282,6 +304,7 @@ def deck_keyboard(player, suit):
     pass
 
 
+
 def menu_command(update, context):
     """
     make a command through the keyboard
@@ -291,30 +314,27 @@ def menu_command(update, context):
     """
     context.bot.send_message(chat_id=update.effective_chat.id, reply_markup=keyboards['menu'])
 
-def kick_all_ecess_players(bot):
-    pass
-
-
-
 
 def rules(update, context):
     """sends a description of the game."""
     context.bot.send_message(chat_id=update.effective_chat.id, text=messages["rules"])
 
+
 def rules_long(update, context):
     """sends a detailed description of the game"""
     context.bot.send_message(chat_id=update.effective_chat.id, text=messages["rules_long"])
 
-
+#TODO: Send a score
 def score(update, context):
     pass
 
-def stop(update, context): # nur admin
+#TODO do I need this?
+def stop(update, context):  # nur admin
     context.bot.send_message(chat_id=update.effective_chat.id, text="See ya 😋")
     ##delete game instance
     pass
 
-
+# TODO do I need this?
 def kill(updater):
     """kills the bot instance."""
     # source https://github.com/python-telegram-bot/python-telegram-bot/issues/801
@@ -332,32 +352,33 @@ def unknown_command(update, context):
     # source https://github.com/python-telegram-bot/python-telegram-bot/issues/801
     context.bot.send_message(chat_id=update.effective_chat.id, text="I'm sorry but I don't know that command😟.")
 
+
 # Handlers
 unknown_command_handler = MessageHandler(Filters.command, unknown_command)
 
 # from github https://github.com/FrtZgwL/CoronaBot/blob/master/corona_bot.py
-#persistence = PicklePersistence(filename="storage/bot_storage.pkl")
+# persistence = PicklePersistence(filename="storage/bot_storage.pkl")
 entry_point = [MessageHandler(Filters.status_update.chat_created, new_game),
                MessageHandler(Filters.status_update.new_chat_members, new_player)]
-states = { # TODO What if the person that created the chat leaves durin sb is in the lobby?
+states = {  # TODO What if the person that created the chat leaves durin sb is in the lobby?
     conversation_states['lobby']: [MessageHandler(Filters.status_update.new_chat_members, new_player),
                                    MessageHandler(Filters.status_update.left_chat_member, player_left),
-                                   CommandHandler('play', start_game),],
+                                   CommandHandler('play', start_game), ],
     conversation_states['play']: [MessageHandler(Filters.regex('[♠♥♣♦]((\d\d?)|[JQKA])'), play_card)],
     conversation_states['menu']: [CommandHandler('rules', rules),
-                                   CommandHandler('ruleslong', rules_long),
-                                   CommandHandler('score', score),
-                                   CommandHandler('help', bot_help)],
+                                  CommandHandler('ruleslong', rules_long),
+                                  CommandHandler('score', score),
+                                  CommandHandler('help', bot_help)],
 
-     conversation_states['deck_page1']:[]
+    conversation_states['deck_page1']: []
     # conversation_states['deck_page2']:[],
     # conversation_states['deck_page3']:[],
     # conversation_states['deck_page4']:[]
-    }
+}
 navigation = ConversationHandler(entry_point,
                                  states,
-                                 [],#fallbacks
-                                 persistent=False, # TODO do I need persistence?
+                                 [],  # fallbacks
+                                 persistent=False,  # TODO do I need persistence?
                                  name="navigation")
 
 
@@ -371,7 +392,6 @@ def main():
 
     # start looking for chat updates
     updater.start_polling()
-
 
 
 if __name__ == "__main__":
