@@ -22,12 +22,13 @@ class Game:
         self.scores = dict([(player, 0) for player in players])
         self.players = players
         self.round_over = True
-        
+        # TODO get a table with the players names and scores: https://stackoverflow.com/questions/35634238/how-to-save-a-pandas-dataframe-table-as-a-png
     
     def new_round(self):
         """Start a new round. That means resetting deck and stack and dealing cards to all players."""
         self.hands = {}
         self.deck = [Card(value) for value in range(52)] # TODO: generalize this to new_round
+        random.seed()
         random.shuffle(self.deck)
         self.stack = [self.deck.pop()]
         self.round_over = False
@@ -36,7 +37,11 @@ class Game:
         while self.top_of_stack.rank == 8:
             old_top = self.top_of_stack
             self.stack.remove(old_top)
-            self.deck.insert(len(self.deck/2), old_top) # TODO: This could be more random
+            # lg.debug(f"self.deck: {[str(card) for card in self.deck]}")
+            # lg.debug(f"type of length of deck: {type(len(self.deck))}")
+            # lg.debug(f"length of deck: {len(self.deck)}")
+            random.seed()
+            self.deck.insert(random.randint(0,len(self.deck)-1), old_top)
             self.stack.append(self.deck.pop())
 
         lg.debug(f"the stack is:{[str(card) for card in self.stack]}")

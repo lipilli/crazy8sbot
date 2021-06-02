@@ -1,4 +1,5 @@
 from enum import Enum
+from telegram import  Bot
 
 """Contains all constants"""
 
@@ -8,19 +9,35 @@ MoveOutcome = Enum(
     "MoveOutcome", 
     "valid_move round_won game_won invalid_move")
 
-# suits = "♠♥♣♦" 
-suits = "shcd" # used for debugging. switch with line on top for release
+suits = "♠♥♣♦"
+# suits = "shcd" # used for debugging. switch with line on top for release
 
 hand_filler = "."
 
 # Bot constants
 
 BOT_TOKEN = "1665894053:AAHxd8VUNhV1Q8ncLrF9IvljRPcGG9zfH60"
+
+# Testing ---
 TESTB0T_TOKEN1 = "1796005782:AAH50veupoTsA4KbrKv9A7ZndiO0CCewa9g"
 TESTBOT_TOKEN2 = "1792398859:AAGoeCc9y2GX3MsUaHPRd0f2I9_lLxTUFgA"
 TESTBOT_TOKEN3 = "1897111191:AAFvK3sB-9bdd-alOPWaWYTzzWKp5sGGy4w"
 TESTBOT_TOKEN4 = "1879219956:AAH5bpXKl1yxyCEwsZ953sS5mc4DO9RHGbw"
 
+BOT1 = Bot(TESTB0T_TOKEN1)
+BOT2 = Bot(TESTBOT_TOKEN2)
+BOT3 = Bot(TESTBOT_TOKEN3)
+BOT4 = Bot(TESTBOT_TOKEN4)
+
+TESTBOTS = [BOT1, BOT2, BOT3, BOT4]
+def send(bot, message):
+    bot.send_message(-597750631, message)
+
+def rmb():
+    for bot in TESTBOTS:
+        bot.leave_chat(-597750631)
+
+# Testing ---
 
 keyboards = {
     'menu': {
