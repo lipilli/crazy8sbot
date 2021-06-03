@@ -8,3 +8,9 @@ bot.log
 .vscode/
 src/__pycache__/
 testbot*
+src/message.json
+src/protokoll*
+protokoll*
+.gitignore
+
+
