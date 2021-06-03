@@ -2,6 +2,7 @@ import random
 import logging as lg
 from card import Card
 from constants import MoveOutcome
+from constants import suits
 
 lg.basicConfig(level=lg.DEBUG)
 
@@ -88,7 +89,11 @@ class Game:
         hand = self.hands[player]
         
         # check if card can be played
-        if card in hand and valid_move(card, self.top_of_stack):
+        if card in hand and self.valid_move(card, self.top_of_stack):
+            # reset choice if last card was an 8
+            if self.top_of_stack.rank == 8:
+                self.last_eights_suit = ""
+            
             # play move
             hand.remove(card)
 
@@ -114,6 +119,10 @@ class Game:
                     return MoveOutcome.game_won
                 else:
                     return MoveOutcome.round_won
+            
+            # check if an 8 is played, earning the privilege to choose a suit
+            elif card.rank == 8:
+                return MoveOutcome.crazy8
 
             # nothing is won, just a normal valid move
             else:
@@ -159,7 +168,7 @@ class Game:
         can_move = False
 
         for card in self.hands[player]:
-            if valid_move(card, self.top_of_stack):
+            if self.valid_move(card, self.top_of_stack):
                 lg.debug(f"player {player} can move {str(card)}")
                 can_move = True
 
@@ -169,15 +178,25 @@ class Game:
         # return max([valid_move(card, self.top_of_stack) for card in self.hands[1]])
 
     def choose_suit(self, suit: str):  # TODO choose suit function
-        self.last_eights_suit = suit
+        if suit in suits:
+            self.last_eights_suit = suit
+            lg.debug(f"{suit} was chosen as a new suit.")
+        else:
+            raise ValueError("Invalid suit")
 
 
-def valid_move(card_played, card_on_stack):
-    """Returns true if it would be a valid move to play card_played on top of card_on_stack"""
-    crazy8 = card_played.rank == 8
-    rank_fits = card_played.rank == card_on_stack.rank
-    suit_fits = card_played.suit == card_on_stack.suit
+    def valid_move(self, card_played, card_on_stack):
+        """Returns true if it would be a valid move to play card_played on top of card_on_stack"""
 
-    return crazy8 or rank_fits or suit_fits
+        played_8 = card_played.rank == 8
+        rank_fits = card_played.rank == card_on_stack.rank
+        suit_fits = card_played.suit == card_on_stack.suit
+        valid_card_on_top_of_8 = card_played.suit == self.last_eights_suit
+
+        # irgnoring suit of top of stack if it is an 8
+        if self.top_of_stack.rank == 8:
+            return played_8 or valid_card_on_top_of_8
+        else:
+            return played_8 or rank_fits or suit_fits
 
 
