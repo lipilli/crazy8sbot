@@ -14,7 +14,7 @@ Add this bot to your telegram group and play crazy eights with your friends.
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters, CallbackContext
 from telegram import Update
-from typing import List
+from typing import List, Dict
 
 import logging as lg
 
@@ -77,13 +77,13 @@ Keyboards senden:
 
 # -- Helper functions -- #
 
-def stop(update, context):  # nur admin
+def stop(update: Update, context: CallbackContext):  # nur admin
     context.bot.send_message(chat_id=update.effective_chat.id, text="See ya 😋")
     ##delete game instance
     pass
 
 
-def hands_log_str(update, context):
+def hands_log_str(update: Update, context: CallbackContext):
     players = context.chat_data['players']
     my_game = context.chat_data['game']
     hands_log = "Hands:\n"
@@ -95,32 +95,38 @@ def hands_log_str(update, context):
     return hands_log
 
 
-def get_user_from_id(update, context, user_id):
+def get_user_from_id(update: Update, context: CallbackContext, user_id:int):
     return context.bot.get_chat_member(update.message.chat.id, int(user_id)).user
 
 
-def get_users_name_from_id(update, context, user_id):
+
+def get_username_from_id(update: Update, context: CallbackContext, user_id:int) -> str:
     user = get_user_from_id(update, context, user_id)
+    if user.username == None:
+        if user.last_name == None:
+            name = user.first_name.replace(' ', '-')
+        else:
+            name = user.first_name.replace(' ', '-') + "_" + user.last_name.replace(' ', '-')
+
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text=f"@{name}, you seem to not have a username. Please add one to continue playing.")
+        raise ValueError(f"{name} has no username", name)
+    else: return user.username
+
+def get_users_name_from_id(update: Update, context: CallbackContext, user_id:int) -> str:
     try:
-        return user.username
-    except TypeError:
-        try:  # user has no username
-            return user.first_name + " " + user.last_name
-        except TypeError:  # user has no last name
-            try:
-                return user.first_name
-            except:  # TODO what do you do
-                return "panini head"
+        return get_username_from_id(update, context, user_id)
+    except ValueError as e:
+        return e.args[1]
 
 
-def get_current_players(update, context):
-    return {str(player) + ':' +
-            get_users_name_from_id(update, context, player)
-            # TODO is int necessary here?  also test maybe i need "()" here I rempved them
+
+def get_current_players(update: Update, context: CallbackContext):
+    return {str(player) + ':' + get_users_name_from_id(update, context, player)
             for player in context.chat_data['players']}
 
 
-def tell_turn(update, context):
+def tell_turn(update: Update, context: CallbackContext):
     players = list(context.chat_data['players'])
     at_turn = context.chat_data['turn']
     player_at_turn = get_users_name_from_id(update, context, players[at_turn])
@@ -128,18 +134,18 @@ def tell_turn(update, context):
                              text="It's your turn " + player_at_turn)
 
 
-def tell_deck(update, context):
+def tell_deck(update: Update, context: CallbackContext):
     card_on_stack = str(context.chat_data['game'].top_of_stack)
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text=f"{card_on_stack} is on the stack")
 
 
-def leave_chat(update, context):
+def leave_chat(update: Update, context: CallbackContext):
     context.bot.leaveChat(update.effective_chat.id)
 
 
 # TODO delete game fkt
-def end_game(context):
+def end_game(context:CallbackContext):
     """deletes a game from all games"""
     context.chat_data['players'] = {}
     context.players_left = {}
@@ -147,273 +153,41 @@ def end_game(context):
     context.chat_data['turn'] = 0
 
 
-# TODO create keybord
-def create_keyboard(hand):
-    # Returns a
-
-    """ Returns a keboard like this just with the specific cards of a player
-    keyboard = {
-    "keyboard": [
-        ["/rules", "/ruleslong", "/score"],
-        ["/sudfhuhs", "/dasd", "/hkjklj"],
-    ],
-    "resize_keyboard": True,
-    "selective" : True
-    }
-
-    I need the pages 2-4 as well
-    """
-
 
 # TODO hand_out hand
-def hand_out_hands(update, context):
+def hand_out_hands(update: Update, context: CallbackContext) -> bool:
     """
-    Get array of players
-    for each player create keyboard
-    send reply markup to every player
-    create multilevel keyboard, how do I do that again?
-    can I have multiple different conversation states with different users in the chat?
+    function that hands out cards to all players
 
     """
-
+    players = context.chat_data['players']
+    try:
+        player_usernames = [get_username_from_id(update, context, player) for player in players]
+        for player in player_usernames:
+            context.bot.send_message(text=f"Handing out cards to {player}", reply_markup=make_hand_keyboard(player))
+        return True
+    except:
+        return False
 
 # TODO I need a draw function
 
-def new_round(game):  # TODO add sending new keyboards
+def new_round(update: Update, context:CallbackContext, game: Game) -> bool:  # TODO add sending new keyboards
     game.new_round()
+    if (hand_out_hands(update, context)):
+        return True
+    else:
+        return False
 
 
 # TODO do I need this?
-def kill(updater):
+def kill(updater:Updater):
     """kills the bot instance."""
     # source https://github.com/python-telegram-bot/python-telegram-bot/issues/801
     updater.stop()
     updater.is_idle = False
     exit()
 
-
-# -- End: Helper functions -- #
-
-
-# -- Testing -- #
-def new_game_test(update, context):
-    # TODO remove for real application
-    lg.debug("New game started")
-    context.chat_data['players'] = {857950388, 1848549159}
-    context.players_left = {}
-    context.chat_data['game'] = 0
-    context.chat_data['turn'] = 0
-    # initialize the game
-    context.chat_data['game'] = Game(list(context.chat_data['players']))
-    context.chat_data['game'].new_round()
-    # TODO hand_out_hands(update, context) ask cedric
-    lg.info(
-        f"Game initialized {hands_log_str(update, context)}")  # TODO facilitate this here whith a function that returns the deck as a string
-    tell_turn(update, context)
-    tell_deck(update, context)
-    return conversation_states['play']
-
-
-# -- End: Testing -- #
-
-
-# -- Message handler callback functions --#
-
-
-def new_game(update, context):
-    """ triggered when a new group chat adds the bot, hence, starts a game
-
-        Function that is triggered when somebody creates a new chat with the chatbot.
-        Registers the person that created the chat as player.
-        TODO do I need to differentiate between creating a chat with the chatbot and creating the chat with everyone who wants to play?
-        param:
-            update:
-            context:
-        test: TODO ask if we need this here
-    """
-
-    sender = update.message.from_user.id
-    lg.info(f"{get_users_name_from_id(update, context, sender)} created the chat {update.message.chat.title}")
-    context.chat_data['players'] = {sender}
-    context.players_left = {}
-    context.chat_data['turn'] = 0
-    context.chat_data['game'] = 'lobby'
-    lg.info(
-        f"Players initialized with {str(context.chat_data['players'])} ({get_users_name_from_id(update, context, sender)})")
-    context.bot.send_message(chat_id=update.effective_chat.id, text=messages['welcome'], reply_markup=keyboards['play'])
-
-    return conversation_states['lobby']
-
-
-def new_player(update, context):
-    want2play = {x.id for x in update.message.new_chat_members}
-    lg.info(f"new member(s): {str(want2play)}")
-    context.chat_data['players'].update(want2play)
-    try:
-        context.chat_data['players'].remove(context.bot.get_me().id)
-    except KeyError:
-        pass
-
-    current_players = get_current_players(update, context)
-    lg.info(f"Currently in the lobby:\n {str(current_players)}")
-    return conversation_states['lobby']
-
-
-# TODO player left fkt
-def player_left(update, context):
-    """remove from players list
-    When the last player leaves delete the chat in telegram and the context and delete the game
-    """
-    left = update.message.left_chat_member.id
-    if context.chat_data['game'] == 'lobby':
-        try:
-            players_before_leaving = get_current_players(update, context)
-            context.chat_data['players'].remove(left)
-            players_after_leaving = get_current_players(update, context)
-            lg.info(f"successfully removed {players_before_leaving.difference(players_after_leaving)}")
-        except:  # TODO what error is this?
-            lg.info("a not registered chat member left the group")
-            context.bot.send_message(chat_id=update.effective_chat.id,
-                                     text="Remember to next time create a grop only with me before adding more members to the chat.😉")
-
-
-def start_game(update, context):  # TODo, just send a message
-    players = context.chat_data['players']
-    # Only the case if the bot is the only on in the group or the group was opened wrong and has unregistered players
-    if len(players) == 0:
-        context.bot.send_message(chat_id=update.effective_chat.id, text=messages['group_opened_wrong'])
-        leave_chat(update, context)
-    elif len(players) == 1:
-        context.bot.send_message(chat_id=update.effective_chat.id, text="Please add more players. 🙃")
-    elif len(players) < 6:
-        # my_game = context.chat_data['game'] TODO ask cedric this don't work right?
-        # my_game = Game(list(players))
-
-        # initialize the game
-        context.chat_data['game'] = Game(list(players))
-        context.chat_data['game'].new_round()
-        # TODO hand_out_hands(update, context) ask cedric
-        lg.info(
-            f"Game initialized {hands_log_str(update, context)}")  # TODO facilitate this here whith a function that returns the deck as a string
-        # TODO Tell deck
-        tell_turn(update, context)
-        return conversation_states['play']
-    else:
-        context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text=f"Sorry, you have too many players 😥. {len(players) - 5} members must leave the group.")
-        return conversation_states['lobby']
-
-
-def play_card(update: Update, context: CallbackContext):  # TODO uff, muss das?
-    lg.debug("A card was played")
-    players = list(context.chat_data['players'])
-    at_turn = context.chat_data['turn']
-    player = update.message.from_user.id
-    move = update.message.text
-    lg.debug(f"player: {player} on turn: {players[at_turn]} tried move: {move}")
-    lg.debug(f"player: {player} \nturn: {context.chat_data['turn']}")
-
-    game = context.chat_data['game']
-
-    if player == players[at_turn]:
-        lg.debug("Player tried move on right turn")
-        move_return = game.move(player, Card(move))
-        lg.debug(
-            f"player: {player} on turn: {context.chat_data['player']} made move: {move}  outcome is: {move_return}")
-        if move_return == MoveOutcome.valid_move:
-            lg.debug("Player made valid move")
-            context.chat_data["turn"] = (context.chat_data["turn"] + 1) % len(context.chat_data['players'])
-            tell_deck(update, context)
-            tell_turn(update, context)
-
-            return conversation_states['play']
-
-        elif move_return == MoveOutcome.round_won:
-            lg.debug("Round over")
-            context.bot.send_message(chat_id=update.effective_chat.id,
-                                     text="The round is over.\n" +
-                                          get_users_name_from_id(update, context, game.leading_player) +
-                                          "is leading")
-            new_round(game)
-            return conversation_states['play']
-
-            # TODO Score()
-        elif move_return == MoveOutcome.game_won:
-            lg.debug("Game over")
-            context.bot.send_message(chat_id=update.effective_chat.id,
-                                     text="The game is over.\n" +
-                                          get_users_name_from_id(update, context, game.leading_player) +
-                                          ", you won! 🎉")
-            end_game(context)
-            leave_chat(update, context)
-            return conversation_states['play']
-
-
-        elif move_return == MoveOutcome.invalid_move:
-            lg.debug("Player made invalid move")
-            context.bot.send_message(chat_id=update.effective_chat.id,
-                                     text="I'm sorry this move is not valid")
-            return conversation_states['play']
-
-
-    else:
-        context.bot.send_message(chat_id=update.effective_chat.id, text="I'm sorry but it's not your turn 😕")
-        lg.debug("Player tried move on wrong turn")
-        return conversation_states['play']
-
-    # TODO Feedback an player invalid move
-    """
-    check if it is your turn → store in context[next turn or sth]
-    check I f I can play the card
-    If not tell them they can't play rn
-    """
-
-
-def unknown_command(update, context):
-    # source https://github.com/python-telegram-bot/python-telegram-bot/issues/801
-    context.bot.send_message(chat_id=update.effective_chat.id, text="I'm sorry but I don't know that command😟.")
-
-
-# -- End: Message handler callback functions --#
-
-
-# -- Command callback functions -- #
-
-def rules(update, context):
-    """sends a description of the game."""
-    context.bot.send_message(chat_id=update.effective_chat.id, text=messages["rules"])
-
-
-def rules_long(update, context):
-    """sends a detailed description of the game"""
-    context.bot.send_message(chat_id=update.effective_chat.id, text=messages["rules_long"])
-
-
-def bot_help(update, context):
-    """sends a set of commands that can be used with the bot."""
-    context.bot.send_message(chat_id=update.effective_chat.id, text=messages["commands"])
-
-
-# TODO: Send a score
-def score(update, context):
-    pass
-
-
-# -- End: Command callback functions -- #
-
-
-# if page * 9 > len(sorted_hand):
-#  hand_section = [hand_filler for i in range(9)]
-# requested page has some cards
-# else:
-# hand_section = sorted_hand[page * 9:]
-# hand_section.extend([hand_filler for i in range(9-len(hand_section))])
-
-# hand_section = [str(card) for card in hand_section]
-# hs = hand_section # shorter name
-
-
-def make_hand_keyboard(game, player):  # had page
+def make_hand_keyboard(game:Game, player:int):  # had page
     sorted_hand = sorted(game.get_hand(player))
     hand_str = [str(card) for card in sorted_hand]
     cards_per_row = 5
@@ -440,6 +214,249 @@ def make_hand_keyboard(game, player):  # had page
     }
     return keyboard
 
+# -- End: Helper functions -- #
+
+# -- Testing -- #
+def new_game_test(update: Update, context: CallbackContext):
+    # TODO remove for real application
+    lg.debug("New game started")
+    context.chat_data['players'] = {857950388, 1848549159}
+    context.players_left = {}
+    context.chat_data['game'] = 0
+    context.chat_data['turn'] = 0
+    # initialize the game
+    context.chat_data['game'] = Game(list(context.chat_data['players']))
+    new_round_succeeded = new_round(update, context, context.chat_data['game'])
+    if new_round_succeeded:
+        lg.debug(f"Game initialized {hands_log_str(update, context)}")
+        tell_turn(update, context)
+        tell_deck(update, context)
+        return conversation_states['play']
+    else:
+        lg.debug(f"New round could not be started")
+        return conversation_states['lobby']
+
+# -- End: Testing -- #
+
+
+# -- Message handler callback functions --#
+
+
+def new_game(update: Update, context: CallbackContext):
+    lg.debug("A group was created")
+    """ triggered when a new group chat adds the bot, hence, starts a game
+
+        Function that is triggered when somebody creates a new chat with the chatbot.
+        Registers the person that created the chat as player.
+        TODO do I need to differentiate between creating a chat with the chatbot and creating the chat with everyone who wants to play?
+        param:
+            update:
+            context:
+        test: TODO ask if we need this here
+    """
+
+    sender = update.message.from_user.id
+    lg.info(f"{get_users_name_from_id(update, context, sender)} created the chat {update.message.chat.title}")
+    context.chat_data['players'] = {sender}
+    context.players_left = {}
+    context.chat_data['turn'] = 0
+    context.chat_data['game'] = 0
+    lg.info(f"Players initialized with {str(context.chat_data['players'])} "
+            f"({get_users_name_from_id(update, context, sender)})")
+    context.bot.send_message(chat_id=update.effective_chat.id, text=messages['welcome'],
+                             reply_markup=keyboards['play']) #TODO edit welcome message
+    return conversation_states['lobby']
+
+
+def new_player(update: Update, context: CallbackContext):
+    lg.debug("Somebody entered the group")
+    want2play = {x.id for x in update.message.new_chat_members}
+    lg.info(f"new member(s): {str(want2play)}")
+    context.chat_data['players'].update(want2play)
+    try:
+        context.chat_data['players'].remove(context.bot.get_me().id)
+    except KeyError:
+        pass
+
+    for player in want2play:
+        name = get_users_name_from_id(update, context, player)
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text=f"Hi @{name}!",
+                                 reply_markup=keyboards['play'])  # TODO edit welcome message
+
+    lg.info(f"Currently in the lobby:\n {str(get_current_players(update, context))}")
+    return conversation_states['lobby']
+
+
+
+# TODO player left fkt
+def player_left(update: Update, context: CallbackContext):
+    """remove from players list
+    When the last player leaves delete the chat in telegram and the context and delete the game
+    """
+    lg.debug("A player left")
+    left = update.message.left_chat_member.id
+    if context.chat_data['game'] == 'lobby':
+        try:
+            players_before_leaving = get_current_players(update, context)
+            context.chat_data['players'].remove(left)
+            players_after_leaving = get_current_players(update, context)
+            lg.info(f"successfully removed {players_before_leaving.difference(players_after_leaving)}")
+            return conversation_states['lobby']
+
+        except:  # TODO what error is this?
+            lg.info("a not registered chat member left the group")
+            context.bot.send_message(chat_id=update.effective_chat.id,
+                                     text="Remember to next time create a grop only with me before adding more members to the chat.😉")
+            return conversation_states['lobby']
+
+
+def start_game(update: Update, context: CallbackContext):  # TODo, just send a message
+    lg.debug("/play was pressed")
+    players = context.chat_data['players']
+    # Only the case if the bot is the only on in the group or the group was opened wrong and has unregistered players
+    if len(players) == 0:
+        context.bot.send_message(chat_id=update.effective_chat.id, text=messages['group_opened_wrong'])
+        leave_chat(update, context)
+        return conversation_states['lobby']
+    elif len(players) == 1:
+        context.bot.send_message(chat_id=update.effective_chat.id, text="Please add more players. 🙃")
+        return conversation_states['lobby']
+    elif len(players < 6 and context.chat_data['game']!= 0):
+        context.bot.send_message(chat_id=update.effective_chat.id, text="The game is already running")
+        return conversation_states['lobby']
+    elif len(players) < 6:
+        # initialize the game
+        context.chat_data['game'] = Game(list(players))
+        new_round_succeeded = new_round(update, context, context.chat_data['game'])
+        if new_round_succeeded: # fails if a player is missing a username
+            lg.debug(f"Game initialized {hands_log_str(update, context)}")
+            rules(update, context)
+            tell_turn(update, context)
+            tell_deck(update, context)
+            return conversation_states['play']
+        else: # reset the game
+            lg.debug(f"New round could not be started")
+            context.chat_data['game'] = 0
+            return conversation_states['lobby']
+    else:
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text=f"Sorry, you have too many players 😥. {len(players) - 5} members must leave the group.")
+        return conversation_states['lobby']
+
+# TODO command for getting the card on the stack
+
+def play_card(update: Update, context: CallbackContext):  # TODO uff, muss das?
+    lg.debug("A card was played")
+    players = list(context.chat_data['players'])
+    at_turn = context.chat_data['turn']
+    player = update.message.from_user.id
+    move = update.message.text
+    lg.debug(f"player: {player} on turn: {players[at_turn]} tried move: {move}")
+    lg.debug(f"player: {player} \nturn: {context.chat_data['turn']}")
+
+    game = context.chat_data['game']
+
+    if player == players[at_turn]:
+        lg.debug("Player tried move on right turn")
+        move_return = game.move(player, Card(move))
+        lg.debug(
+            f"player: {player} on turn: {context.chat_data['player']} made move: {move}  outcome is: {move_return}")
+        if move_return == MoveOutcome.valid_move:
+            lg.debug("Player made valid move")
+            context.chat_data["turn"] = (context.chat_data["turn"] + 1) % len(context.chat_data['players'])
+            tell_deck(update, context)
+            tell_turn(update, context)
+            return conversation_states['play']
+
+        elif move_return == MoveOutcome.invalid_move:
+            lg.debug("Player made invalid move")
+            context.bot.send_message(chat_id=update.effective_chat.id,
+                                     text="I'm sorry this move is not valid")
+            return conversation_states['play']
+
+        elif move_return == MoveOutcome.round_won:
+            lg.debug("Round over")
+
+            context.bot.send_message(chat_id=update.effective_chat.id,
+                                     text="The round is over.\n" +
+                                          get_users_name_from_id(update, context, game.leading_player) +
+                                          "is leading")
+            new_round(game)
+            tell_turn(update, context)
+            tell_deck(update, context)
+            return conversation_states['play']
+            # TODO Score()
+        elif move_return == MoveOutcome.game_won:
+            lg.debug("Game over")
+            context.bot.send_message(chat_id=update.effective_chat.id,
+                                     text="The game is over.\n" +
+                                          get_users_name_from_id(update, context, game.leading_player) +
+                                          ", you won! 🎉")
+            end_game(context)
+            leave_chat(update, context)
+            return conversation_states['play']
+
+    else:
+        context.bot.send_message(chat_id=update.effective_chat.id, text="I'm sorry but it's not your turn 😕")
+        lg.debug("Player tried move on wrong turn")
+        return conversation_states['play']
+
+    # TODO Feedback an player invalid move
+    """
+    check if it is your turn → store in context[next turn or sth]
+    check I f I can play the card
+    If not tell them they can't play rn
+    """
+
+#
+# def unknown_command(update, context):
+#     # source https://github.com/python-telegram-bot/python-telegram-bot/issues/801
+#     context.bot.send_message(chat_id=update.effective_chat.id, text="I'm sorry but I don't know that command😟.")
+#     current_conversation_state = context.m
+
+
+# -- End: Message handler callback functions --#
+
+
+# -- Command callback functions -- #
+
+def rules(update: Update, context: CallbackContext):
+    """sends a description of the game."""
+    context.bot.send_message(chat_id=update.effective_chat.id, text=messages["rules"])
+
+
+def rules_long(update: Update, context: CallbackContext):
+    """sends a detailed description of the game"""
+    context.bot.send_message(chat_id=update.effective_chat.id, text=messages["rules_long"])
+
+
+def bot_help(update: Update, context: CallbackContext):
+    """sends a set of commands that can be used with the bot."""
+    context.bot.send_message(chat_id=update.effective_chat.id, text=messages["commands"])
+
+
+# TODO: Send a score
+def score(update: Update, context: CallbackContext):
+    pass
+
+
+# -- End: Command callback functions -- #
+
+
+# if page * 9 > len(sorted_hand):
+#  hand_section = [hand_filler for i in range(9)]
+# requested page has some cards
+# else:
+# hand_section = sorted_hand[page * 9:]
+# hand_section.extend([hand_filler for i in range(9-len(hand_section))])
+
+# hand_section = [str(card) for card in hand_section]
+# hs = hand_section # shorter name
+
+
+
+
 
 """
 import crazy8sbot as c
@@ -455,13 +472,12 @@ cb.send_message(chat_id =-597750631, text="hi", reply_markup=c.make_hand_keyboar
 
 # -- Handlers -- #
 
-unknown_command_handler = MessageHandler(Filters.command, unknown_command)
+# unknown_command_handler = MessageHandler(Filters.command, unknown_command)
 
 # from github https://github.com/FrtZgwL/CoronaBot/blob/master/corona_bot.py
 # persistence = PicklePersistence(filename="storage/bot_storage.pkl")
 entry_point = [MessageHandler(Filters.status_update.chat_created, new_game),
-               CommandHandler('ng', new_game_test),
-               MessageHandler(Filters.text(['ng']), new_game_test)]  # Testing
+               CommandHandler('ng', new_game_test)]  # Testing
 states = {  # TODO What if the person that created the chat leaves durin sb is in the lobby?
     conversation_states['lobby']: [MessageHandler(Filters.status_update.new_chat_members, new_player),
                                    MessageHandler(Filters.status_update.left_chat_member, player_left),
@@ -476,10 +492,6 @@ states = {  # TODO What if the person that created the chat leaves durin sb is i
                                   CommandHandler('score', score),
                                   CommandHandler('help', bot_help)],  # TODO Back
 
-    conversation_states['deck_page1']: []
-    # conversation_states['deck_page2']:[],
-    # conversation_states['deck_page3']:[],
-    # conversation_states['deck_page4']:[]
 }
 navigation = ConversationHandler(entry_point,
                                  states,
@@ -496,7 +508,7 @@ def main():
 
     # add handlers
     dispatcher.add_handler(navigation)
-    dispatcher.add_handler(unknown_command_handler)
+    # dispatcher.add_handler(unknown_command_handler)
 
     # start looking for chat updates
     updater.start_polling()

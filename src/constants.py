@@ -84,8 +84,8 @@ messages = {
     To play a game, create a new group with only you and me. Then add all other players and press play.""",
     'welcome':"""
     Hi! I am the crazy8s bot😜. 
-    Ready for a game of crazy eights?\n
-    To begin you must promote me to admin. Then add 1-4 players to the group in one batch.
+    Ready for a game of crazy eights?
+    To begin add 1-4 players to the group then press play.
     """,
     'rules': """Here are the rules: 
      - Cards you play must match the color or number of the card on the deck
