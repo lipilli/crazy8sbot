@@ -13,7 +13,7 @@ Add this bot to your telegram group and play crazy eights with your friends.
 # TODO: warum rundedt int nochmal ab?
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters, CallbackContext
-from telegram import Update
+from telegram import Update, ReplyKeyboardMarkup
 from typing import List, Dict
 
 import logging as lg
@@ -29,42 +29,25 @@ import constants as c
 # source: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Extensions-%E2%80%93-Your-first-Bot
 lg.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=lg.DEBUG)
 
-# TODO: command handlers: play, score, help, endgame, killbot
-# TODO: Message handlers: lay cards, curse words / emojis
-# TODO: Keyboard
-# TODO: Classes: players, game (players, rounds, score):
-# TODO: score
+# TODO: command handlers:score, endgame
 # TODO: Figure out when to use lg.debug and when to use logging.info
-# TODO: ask cedric: when do you use info and when debug?
-# TODO: Hand out hands, play card, multi level keyboard
 
 '''Goal
 Basic game playable (Goal Reached when I have seen all these in action once)
-- Track the order ppl play in and call ppl out that want to play at the wrong turn
-- When an 8 is played: 
+- Handle 8s: 
     - send a seperate keyboard to the person who played it
     - tell it to the game somehow
-- I must be able to check if the card is an 8 → send ask for a color how does that work in the game? 
-- Tell what card is on the stack 
-- draw card functionality -> check if they can draw (they must draw until they can play) 
-- You must lay a card to complete your tun 
+    - I must be able to check if the card is an 8 → send ask for a color how does that work in the game? 
 - Function new round
-
-Keyboards: 
-    - Send the play button to every body at the beginning 
-    - check what a keyboard with 33 cards looks like first
-    - Keyborad with 10 card slots is sent to everybody, Then 15, 20, 25, 30, 33(next to draw button)
+- Function end game
 
 Other: 
-- Add info that a player must have a username → check when ppl start is pressed  → function check_if_all_players_have_usernames(update, context)
 - display the score: make a pic? → simplest thing is just a simple "100 - Jen ..." Highlight the leading player
 - check if stack is empty → new round + Message "yo stack empte, blah is leading" 
-- send a sticker of the card that is on the stack 
 - Users leaving the chat must be handled: 
     - In the game: dont make moves with player
     - In the bot: just rmove from player array
     - Do I need the left members array? 
- - test delete_message(chat_id, message_id, timeout=None, api_kwargs=None)
 '''
 
 """
@@ -104,9 +87,9 @@ def get_username_from_id(update: Update, context: CallbackContext, user_id:int) 
     user = get_user_from_id(update, context, user_id)
     if user.username == None:
         if user.last_name == None:
-            name = user.first_name.replace(' ', '-')
+            name = user.first_name.replace(' ', '_')
         else:
-            name = user.first_name.replace(' ', '-') + "_" + user.last_name.replace(' ', '-')
+            name = user.first_name.replace(' ', '_') + "_" + user.last_name.replace(' ', '_')
 
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  text=f"@{name}, you seem to not have a username. Please add one to continue playing.")
@@ -129,12 +112,14 @@ def get_current_players(update: Update, context: CallbackContext):
 def tell_turn(update: Update, context: CallbackContext):
     players = list(context.chat_data['players'])
     at_turn = context.chat_data['turn']
-    player_at_turn = get_users_name_from_id(update, context, players[at_turn])
+    player_at_turn = get_username_from_id(update, context, players[at_turn])
+    game = context.chat_data['game']
+    hand_keyboard = make_hand_keyboard(game, players[at_turn])
     context.bot.send_message(chat_id=update.effective_chat.id,
-                             text="It's your turn " + player_at_turn)
+                             text="It's your turn @" + player_at_turn,
+                             reply_markup=hand_keyboard) #TODO faulty?
 
-
-def tell_deck(update: Update, context: CallbackContext):
+def tell_top_of_stack(update: Update, context: CallbackContext):
     card_on_stack = str(context.chat_data['game'].top_of_stack)
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text=f"{card_on_stack} is on the stack")
@@ -158,22 +143,25 @@ def end_game(context:CallbackContext):
 def hand_out_hands(update: Update, context: CallbackContext) -> bool:
     """
     function that hands out cards to all players
-
     """
-    players = context.chat_data['players']
+    players = list(context.chat_data['players'])
+    game = context.chat_data['game']
     try:
         player_usernames = [get_username_from_id(update, context, player) for player in players]
-        for player in player_usernames:
-            context.bot.send_message(text=f"Handing out cards to {player}", reply_markup=make_hand_keyboard(player))
+        for i in range(len(players)):
+            hand_keyboard = make_hand_keyboard(game,players[i])
+            context.bot.send_message(chat_id=update.effective_chat.id, text=f"Handing out cards to @{player_usernames[i]}", reply_markup=hand_keyboard)
         return True
-    except:
+    except Exception as e:
+        lg.debug(f"Exception in hand_out_hands:{str(e.args)}")
         return False
 
-# TODO I need a draw function
 
 def new_round(update: Update, context:CallbackContext, game: Game) -> bool:  # TODO add sending new keyboards
     game.new_round()
-    if (hand_out_hands(update, context)):
+    hand_out_hands_result = hand_out_hands(update, context)
+    lg.debug(f"Hand out hands result: {hand_out_hands_result}")
+    if (hand_out_hands_result):
         return True
     else:
         return False
@@ -212,7 +200,7 @@ def make_hand_keyboard(game:Game, player:int):  # had page
         "resize_keyboard": True,
         "selective": True
     }
-    return keyboard
+    return ReplyKeyboardMarkup(keyboard_buttons,resize_keyboard=True, selective=True)
 
 # -- End: Helper functions -- #
 
@@ -230,7 +218,7 @@ def new_game_test(update: Update, context: CallbackContext):
     if new_round_succeeded:
         lg.debug(f"Game initialized {hands_log_str(update, context)}")
         tell_turn(update, context)
-        tell_deck(update, context)
+        tell_top_of_stack(update, context)
         return conversation_states['play']
     else:
         lg.debug(f"New round could not be started")
@@ -240,7 +228,6 @@ def new_game_test(update: Update, context: CallbackContext):
 
 
 # -- Message handler callback functions --#
-
 
 def new_game(update: Update, context: CallbackContext):
     lg.debug("A group was created")
@@ -322,7 +309,7 @@ def start_game(update: Update, context: CallbackContext):  # TODo, just send a m
     elif len(players) == 1:
         context.bot.send_message(chat_id=update.effective_chat.id, text="Please add more players. 🙃")
         return conversation_states['lobby']
-    elif len(players < 6 and context.chat_data['game']!= 0):
+    elif len(players) < 6 and context.chat_data['game']!= 0:
         context.bot.send_message(chat_id=update.effective_chat.id, text="The game is already running")
         return conversation_states['lobby']
     elif len(players) < 6:
@@ -331,9 +318,10 @@ def start_game(update: Update, context: CallbackContext):  # TODo, just send a m
         new_round_succeeded = new_round(update, context, context.chat_data['game'])
         if new_round_succeeded: # fails if a player is missing a username
             lg.debug(f"Game initialized {hands_log_str(update, context)}")
-            rules(update, context)
+            context.bot.send_message(chat_id=update.effective_chat.id,
+                                     text=messages['start']+messages['rules'])
             tell_turn(update, context)
-            tell_deck(update, context)
+            tell_top_of_stack(update, context)
             return conversation_states['play']
         else: # reset the game
             lg.debug(f"New round could not be started")
@@ -345,6 +333,26 @@ def start_game(update: Update, context: CallbackContext):  # TODo, just send a m
         return conversation_states['lobby']
 
 # TODO command for getting the card on the stack
+
+def check_turn(update:Update, context:CallbackContext, user_id:int)-> bool:
+    players = list(context.chat_data['players'])
+    at_turn = context.chat_data['turn']
+    if players[at_turn] == user_id: return True
+    else:
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text=messages['wrong_turn'])
+        return False
+
+def choose_suit(update:Update, context:CallbackContext):
+    lg.debug("A player wants to choose a suit")
+    players = list(context.chat_data['players'])
+    at_turn = context.chat_data['turn']
+    player = update.message.from_user.id
+    suit = update.message.text
+    if check_turn(update, context, player):
+
+
+
 
 def play_card(update: Update, context: CallbackContext):  # TODO uff, muss das?
     lg.debug("A card was played")
@@ -360,13 +368,19 @@ def play_card(update: Update, context: CallbackContext):  # TODO uff, muss das?
     if player == players[at_turn]:
         lg.debug("Player tried move on right turn")
         move_return = game.move(player, Card(move))
-        lg.debug(
-            f"player: {player} on turn: {context.chat_data['player']} made move: {move}  outcome is: {move_return}")
+        lg.debug(f"player: {player} on turn: {players[at_turn]} made move: {move}  outcome is: {move_return}")
         if move_return == MoveOutcome.valid_move:
             lg.debug("Player made valid move")
-            context.chat_data["turn"] = (context.chat_data["turn"] + 1) % len(context.chat_data['players'])
-            tell_deck(update, context)
-            tell_turn(update, context)
+            #Detect 8:
+            if Card(move).rank == 8:
+                context.bot.send_message(chat_id=update.effective_chat.id,
+                                         text=f"Careful a crazy 8😲!\n@{get_username_from_id(player)} what suit do you choose?",
+                                         reply_markup=keyboards['choose_suit'])
+                return conversation_states["coose_suit"]
+            else:
+                context.chat_data["turn"] = (context.chat_data["turn"] + 1) % len(context.chat_data['players'])
+                tell_top_of_stack(update, context)
+                tell_turn(update, context)
             return conversation_states['play']
 
         elif move_return == MoveOutcome.invalid_move:
@@ -384,7 +398,7 @@ def play_card(update: Update, context: CallbackContext):  # TODO uff, muss das?
                                           "is leading")
             new_round(game)
             tell_turn(update, context)
-            tell_deck(update, context)
+            tell_top_of_stack(update, context)
             return conversation_states['play']
             # TODO Score()
         elif move_return == MoveOutcome.game_won:
@@ -398,7 +412,7 @@ def play_card(update: Update, context: CallbackContext):  # TODO uff, muss das?
             return conversation_states['play']
 
     else:
-        context.bot.send_message(chat_id=update.effective_chat.id, text="I'm sorry but it's not your turn 😕")
+        context.bot.send_message(chat_id=update.effective_chat.id, text=messages['wrong_turn'])
         lg.debug("Player tried move on wrong turn")
         return conversation_states['play']
 
@@ -409,11 +423,32 @@ def play_card(update: Update, context: CallbackContext):  # TODO uff, muss das?
     If not tell them they can't play rn
     """
 
-#
-# def unknown_command(update, context):
-#     # source https://github.com/python-telegram-bot/python-telegram-bot/issues/801
-#     context.bot.send_message(chat_id=update.effective_chat.id, text="I'm sorry but I don't know that command😟.")
-#     current_conversation_state = context.m
+def draw_card(update, context): #TODO you should technically not pick a card if you can play a card
+    lg.debug("PLayer pressed /draw")
+    game = context.chat_data['game']
+    player = update.message.from_user.id
+    players = list(context.chat_data['players'])
+    at_turn = context.chat_data['turn']
+
+    if player == players[at_turn]:
+        lg.debug("Player tried to draw a card on right turn")
+        game.draw(player)
+        hand_keyboard = make_hand_keyboard(game, players[at_turn])
+        context.chat_data["turn"] = (context.chat_data["turn"] + 1) % len(context.chat_data['players'])
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text=f"@{get_username_from_id(update, context, player)} drew a card",
+                                 reply_markup = hand_keyboard)
+        tell_turn(update, context)
+    else:
+        context.bot.send_message(chat_id=update.effective_chat.id, text=messages['wrong_turn'])
+        lg.debug("Player tried to draw card on wrong turn")
+    return conversation_states['play']
+
+
+def unknown_command(update, context):
+    # source https://github.com/python-telegram-bot/python-telegram-bot/issues/801
+    context.bot.send_message(chat_id=update.effective_chat.id, text="I'm sorry but I don't know that command😟.")
+    current_conversation_state = context.m
 
 
 # -- End: Message handler callback functions --#
@@ -467,7 +502,7 @@ mg = g.Game([1,2,3])
 mg.new_round()
 for i in range (33): mg.draw(1)
 keyboard = c.make_hand_keyboard(mg, 1)
-cb.send_message(chat_id =-597750631, text="hi", reply_markup=c.make_hand_keyboard(mg, 1))
+cb.send_message(chat_id =-540927526, text="hi", reply_markup=c.make_hand_keyboard(mg, 1))
 """
 
 # -- Handlers -- #
@@ -481,23 +516,29 @@ entry_point = [MessageHandler(Filters.status_update.chat_created, new_game),
 states = {  # TODO What if the person that created the chat leaves durin sb is in the lobby?
     conversation_states['lobby']: [MessageHandler(Filters.status_update.new_chat_members, new_player),
                                    MessageHandler(Filters.status_update.left_chat_member, player_left),
-                                   CommandHandler('play', start_game), ],  # pla PLay button an alle
-    conversation_states['play']: [
-        MessageHandler(Filters.text & Filters.regex('([♠♥♣♦]|[♠️♣️♥️♦️])((2|3|4|5|6|7|8|9|10|11|12)|[JQKA])'),
-                       play_card),
-        CommandHandler('ng', new_game_test),
-        MessageHandler(Filters.text(['ng']), new_game_test)],  # Testing
-    conversation_states['menu']: [CommandHandler('rules', rules),
+                                   CommandHandler('play', start_game),
+                                   CommandHandler('ng', new_game_test), #TODO remove testing
+                                   CommandHandler('help', bot_help),
+                                   CommandHandler('rules', rules),
+                                   CommandHandler('ruleslong', rules_long)],
+    conversation_states['play']: [MessageHandler(Filters.text & Filters.regex('([♠♥♣♦]|[♠️♣️♥️♦️])((2|3|4|5|6|7|8|9|10|11|12)|[JQKA])'),
+                                                   play_card),
+                                  CommandHandler('draw', draw_card),
+                                  CommandHandler('stack', tell_top_of_stack),
+                                  CommandHandler('help', bot_help),
+                                  CommandHandler('rules', rules),
                                   CommandHandler('ruleslong', rules_long),
                                   CommandHandler('score', score),
-                                  CommandHandler('help', bot_help)],  # TODO Back
-
+                                  CommandHandler('endgame', end_game),
+                                  CommandHandler('ng', new_game_test)],  # TODO remove testing
+    conversation_states['choose_suit']: [MessageHandler(Filters.text & Filters.regex('([♠♥♣♦]|[♠️♣️♥️♦️])')), choose_suit]
 }
 navigation = ConversationHandler(entry_point,
                                  states,
                                  [],  # fallbacks
                                  persistent=False,  # TODO do I need persistence?
-                                 name="navigation")
+                                 name="navigation",
+                                 per_user=False)
 
 
 # -- End: Handlers -- #

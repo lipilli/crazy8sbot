@@ -40,43 +40,25 @@ def rmb():
 # Testing ---
 
 keyboards = {
-    'menu': {
-        "keyboard": [
-            # TODO: game master: can get rules, score, end the game, request help
-            # TODO: you should be able to leave the game by exiting the group
-            ["rules", "ruleslong", "score"],
-            ["endgame", "help", "deck"]
-        ],
-        "resize_keyboard": True
-    },
-    # 'join': {
-    #     "keyboard": [
-    #         ["/join"]
-    #     ],
-    #     "resize_keyboard": True
-    # },
-    # 'leave': {
-    #     "keyboard": [
-    #         ["/leave"]
-    #     ],
-    #     "resize_keyboard": True
-    # },
     'play': {
         "keyboard": [
             ["/play"]
         ],
         "resize_keyboard": True
+    },
+    'choose_suit':{
+        "keyboard":[
+            ["♥","♠"],
+            ["♣","♦"]
+        ],
+        "rezise_keyboard":True
     }
 }
 
 conversation_states = {
     'lobby': 0,
     'play': 1,
-    'deck_page1': 2,
-    'deck_page2': 3,
-    'deck_page3': 4,
-    'deck_page4': 5,
-    'menu': 6
+    'choose_suit': 2
 }
 
 messages = {
@@ -89,16 +71,13 @@ messages = {
     """,
     'rules': """Here are the rules: 
      - Cards you play must match the color or number of the card on the deck
-     
-     - The 8s are crazy! 
-     Play it at anytime and define a new color. 
-     The next player must play an 8 or a card of the same color
-     
-     - If you can't play, draw cards until you can play
-     
-     - If there is no card on the deck
-     
-     - If the deck is empty and you can't play you are passed""",
+     - The 8s are crazy!:
+        Play it at anytime and define a new color. 
+        The next player must play an 8 or a card of the same color
+    - You must make a move at every turn
+    - You can choose to draw a card at every turn     
+    - If there is no card on the deck 
+    - If the deck is empty and you can't play you are passed""",
 
     'rules_long': """Crazy 8s:
     General:
@@ -121,20 +100,12 @@ messages = {
     Play:
     - Every card (other than eight) you play must match the suit or denomination of the card on the deck
     - The eights are crazy! Play it at anytime and define a new suit. The next player must play an eight or a card of matching suit
-    - If you can't play, draw cards until you can play
+    - You must make a move at every turn
+    - You can choose to draw a card at every turn
     - If there is no card on the deck
     - If the deck is empty and you can't play you are passed
     """,
-    'start': """The 8s are loose 😲😲😲!
-        Get ready for a game of crazy 8s!
-        Before you begin here are the commands you can use during the game:\n""",
-    'commands': """ /join: join a game
-        /leave: leave the game
-        /play: start a new game
-        /rules: short version of the game rules
-        /ruleslong: long version of the game rules
-        /score: current score
-        /endgame: ends the game for all (admin only)
-        /killbot: ends the bot and the game
-        /help: list of available commands"""
+    'game_begin': """Alrighty, let's play a game of crazy 8s! 😁\n""",
+    'commands': "/play: start a new game\n/rules: short version of the game rules\n/ruleslong: long version of the game rules\n/score: current score\n/endgame: ends the game for all (admin only)\n/stack: card on top of the card stack\n/help: list of available commands",
+    'wrong_turn': "I'm sorry but it's not your turn 😕"
 }

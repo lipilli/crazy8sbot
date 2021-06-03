@@ -171,3 +171,4 @@ def valid_move(card_played, card_on_stack):
     suit_fits = card_played.suit == card_on_stack.suit
 
     return crazy8 or rank_fits or suit_fits
+
