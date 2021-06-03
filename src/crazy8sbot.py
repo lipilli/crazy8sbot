@@ -10,6 +10,8 @@ Add this bot to your telegram group and play crazy eights with your friends.
 
 """
 
+# TODO: warum rundedt int nochmal ab?
+
 from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters, CallbackContext
 from telegram import Update
 from typing import List
@@ -22,7 +24,6 @@ from constants import messages, conversation_states, keyboards, BOT_TOKEN, hand_
 from card import Card
 from game import Game
 import constants as c
-
 
 # setup lg
 # source: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Extensions-%E2%80%93-Your-first-Bot
@@ -72,6 +73,8 @@ Keyboards senden:
 * Einmal an alle 
 * Nach frage 
 """
+
+
 # -- Helper functions -- #
 
 def stop(update, context):  # nur admin
@@ -91,6 +94,7 @@ def hands_log_str(update, context):
         hands_log = hands_log + hand
     return hands_log
 
+
 def get_user_from_id(update, context, user_id):
     return context.bot.get_chat_member(update.message.chat.id, int(user_id)).user
 
@@ -108,9 +112,11 @@ def get_users_name_from_id(update, context, user_id):
             except:  # TODO what do you do
                 return "panini head"
 
+
 def get_current_players(update, context):
     return {str(player) + ':' +
-            get_users_name_from_id(update, context, player)  # TODO is int necessary here?  also test maybe i need "()" here I rempved them
+            get_users_name_from_id(update, context, player)
+            # TODO is int necessary here?  also test maybe i need "()" here I rempved them
             for player in context.chat_data['players']}
 
 
@@ -121,10 +127,12 @@ def tell_turn(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text="It's your turn " + player_at_turn)
 
+
 def tell_deck(update, context):
     card_on_stack = str(context.chat_data['game'].top_of_stack)
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text=f"{card_on_stack} is on the stack")
+
 
 def leave_chat(update, context):
     context.bot.leaveChat(update.effective_chat.id)
@@ -141,7 +149,6 @@ def end_game(context):
 
 # TODO create keybord
 def create_keyboard(hand):
-
     # Returns a
 
     """ Returns a keboard like this just with the specific cards of a player
@@ -157,6 +164,7 @@ def create_keyboard(hand):
     I need the pages 2-4 as well
     """
 
+
 # TODO hand_out hand
 def hand_out_hands(update, context):
     """
@@ -169,10 +177,11 @@ def hand_out_hands(update, context):
     """
 
 
-#TODO I need a draw function
+# TODO I need a draw function
 
-def new_round(game): # TODO add sending new keyboards
+def new_round(game):  # TODO add sending new keyboards
     game.new_round()
+
 
 # TODO do I need this?
 def kill(updater):
@@ -182,6 +191,7 @@ def kill(updater):
     updater.is_idle = False
     exit()
 
+
 # -- End: Helper functions -- #
 
 
@@ -189,7 +199,7 @@ def kill(updater):
 def new_game_test(update, context):
     # TODO remove for real application
     lg.debug("New game started")
-    context.chat_data['players'] = {857950388,1848549159}
+    context.chat_data['players'] = {857950388, 1848549159}
     context.players_left = {}
     context.chat_data['game'] = 0
     context.chat_data['turn'] = 0
@@ -197,14 +207,14 @@ def new_game_test(update, context):
     context.chat_data['game'] = Game(list(context.chat_data['players']))
     context.chat_data['game'].new_round()
     # TODO hand_out_hands(update, context) ask cedric
-    lg.info(f"Game initialized {hands_log_str(update, context)}")  # TODO facilitate this here whith a function that returns the deck as a string
+    lg.info(
+        f"Game initialized {hands_log_str(update, context)}")  # TODO facilitate this here whith a function that returns the deck as a string
     tell_turn(update, context)
     tell_deck(update, context)
     return conversation_states['play']
 
 
 # -- End: Testing -- #
-
 
 
 # -- Message handler callback functions --#
@@ -228,7 +238,8 @@ def new_game(update, context):
     context.players_left = {}
     context.chat_data['turn'] = 0
     context.chat_data['game'] = 'lobby'
-    lg.info(f"Players initialized with {str(context.chat_data['players'])} ({get_users_name_from_id(update, context, sender)})")
+    lg.info(
+        f"Players initialized with {str(context.chat_data['players'])} ({get_users_name_from_id(update, context, sender)})")
     context.bot.send_message(chat_id=update.effective_chat.id, text=messages['welcome'], reply_markup=keyboards['play'])
 
     return conversation_states['lobby']
@@ -265,6 +276,7 @@ def player_left(update, context):
             context.bot.send_message(chat_id=update.effective_chat.id,
                                      text="Remember to next time create a grop only with me before adding more members to the chat.😉")
 
+
 def start_game(update, context):  # TODo, just send a message
     players = context.chat_data['players']
     # Only the case if the bot is the only on in the group or the group was opened wrong and has unregistered players
@@ -292,7 +304,7 @@ def start_game(update, context):  # TODo, just send a message
         return conversation_states['lobby']
 
 
-def play_card(update: Update, context: CallbackContext): # TODO uff, muss das?
+def play_card(update: Update, context: CallbackContext):  # TODO uff, muss das?
     lg.debug("A card was played")
     players = list(context.chat_data['players'])
     at_turn = context.chat_data['turn']
@@ -303,29 +315,29 @@ def play_card(update: Update, context: CallbackContext): # TODO uff, muss das?
 
     game = context.chat_data['game']
 
-
     if player == players[at_turn]:
         lg.debug("Player tried move on right turn")
         move_return = game.move(player, Card(move))
-        lg.debug(f"player: {player} on turn: {context.chat_data['player']} made move: {move}  outcome is: {move_return}")
+        lg.debug(
+            f"player: {player} on turn: {context.chat_data['player']} made move: {move}  outcome is: {move_return}")
         if move_return == MoveOutcome.valid_move:
             lg.debug("Player made valid move")
             context.chat_data["turn"] = (context.chat_data["turn"] + 1) % len(context.chat_data['players'])
             tell_deck(update, context)
-            tell_turn(update,context)
+            tell_turn(update, context)
 
             return conversation_states['play']
 
         elif move_return == MoveOutcome.round_won:
             lg.debug("Round over")
             context.bot.send_message(chat_id=update.effective_chat.id,
-                                     text = "The round is over.\n" +
-                                            get_users_name_from_id(update, context, game.leading_player)+
-                                            "is leading")
+                                     text="The round is over.\n" +
+                                          get_users_name_from_id(update, context, game.leading_player) +
+                                          "is leading")
             new_round(game)
             return conversation_states['play']
 
-            #TODO Score()
+            # TODO Score()
         elif move_return == MoveOutcome.game_won:
             lg.debug("Game over")
             context.bot.send_message(chat_id=update.effective_chat.id,
@@ -357,11 +369,10 @@ def play_card(update: Update, context: CallbackContext): # TODO uff, muss das?
     """
 
 
-
-
 def unknown_command(update, context):
     # source https://github.com/python-telegram-bot/python-telegram-bot/issues/801
     context.bot.send_message(chat_id=update.effective_chat.id, text="I'm sorry but I don't know that command😟.")
+
 
 # -- End: Message handler callback functions --#
 
@@ -383,43 +394,64 @@ def bot_help(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text=messages["commands"])
 
 
-#TODO: Send a score
+# TODO: Send a score
 def score(update, context):
     pass
+
 
 # -- End: Command callback functions -- #
 
 
+# if page * 9 > len(sorted_hand):
+#  hand_section = [hand_filler for i in range(9)]
+# requested page has some cards
+# else:
+# hand_section = sorted_hand[page * 9:]
+# hand_section.extend([hand_filler for i in range(9-len(hand_section))])
 
-def make_hand_keyboard(game, player, page):
+# hand_section = [str(card) for card in hand_section]
+# hs = hand_section # shorter name
+
+
+def make_hand_keyboard(game, player):  # had page
     sorted_hand = sorted(game.get_hand(player))
-    
-    # requested page has no cards
-    if page * 9 > len(sorted_hand): 
-        hand_section = [hand_filler for i in range(9)]
-    # requested page has some cards
-    else:
-        hand_section = sorted_hand[page * 9:]
-        hand_section.extend([hand_filler for i in range(9-len(hand_section))])
+    hand_str = [str(card) for card in sorted_hand]
+    cards_per_row = 5
+    # build keyboard rows with 5 cards
+    full_row_count = int(len(hand_str)/cards_per_row)
+    keyboard_buttons = [['/draw']]
+    card_index = 0
+    for j in range(full_row_count): #TODO: can I make this more efficient? Dictionaries?
+        keyboard_row = []
+        for k in range(cards_per_row):
+            keyboard_row.append(hand_str[card_index])
+            card_index += 1
+        keyboard_buttons.append(keyboard_row)
 
-    hand_section = [str(card) for card in hand_section]
-    hs = hand_section # shorter name
+    # fill the last row row with remaining cards and help button
+    last_row = hand_str[full_row_count*5:]
+    last_row.append("/help")
+    keyboard_buttons.append(last_row)
 
     keyboard = {
-        "keyboard":  [
-            ["/draw"],
-            [hs[0],hs[1],hs[2],hs[3],hs[4]],
-            [hs[5],hs[6],hs[7],hs[8],hs[9]],
-            [hs[10],hs[11],hs[12],hs[13],hs[14]],
-            [hs[15],hs[16],hs[17],hs[18],hs[19]]
-        ],
+        "keyboard": keyboard_buttons,
         "resize_keyboard": True,
-        "selective" : True
+        "selective": True
     }
-
     return keyboard
 
 
+"""
+import crazy8sbot as c
+import game as g
+from telegram import Bot
+cb = Bot("1665894053:AAHxd8VUNhV1Q8ncLrF9IvljRPcGG9zfH60")
+mg = g.Game([1,2,3])
+mg.new_round()
+for i in range (33): mg.draw(1)
+keyboard = c.make_hand_keyboard(mg, 1)
+cb.send_message(chat_id =-597750631, text="hi", reply_markup=c.make_hand_keyboard(mg, 1))
+"""
 
 # -- Handlers -- #
 
@@ -429,18 +461,20 @@ unknown_command_handler = MessageHandler(Filters.command, unknown_command)
 # persistence = PicklePersistence(filename="storage/bot_storage.pkl")
 entry_point = [MessageHandler(Filters.status_update.chat_created, new_game),
                CommandHandler('ng', new_game_test),
-               MessageHandler(Filters.text(['ng']), new_game_test)] # Testing
+               MessageHandler(Filters.text(['ng']), new_game_test)]  # Testing
 states = {  # TODO What if the person that created the chat leaves durin sb is in the lobby?
     conversation_states['lobby']: [MessageHandler(Filters.status_update.new_chat_members, new_player),
                                    MessageHandler(Filters.status_update.left_chat_member, player_left),
-                                   CommandHandler('play', start_game), ],# pla PLay button an alle
-    conversation_states['play']: [MessageHandler( Filters.text & Filters.regex('([♠♥♣♦]|[♠️♣️♥️♦️])((2|3|4|5|6|7|8|9|10|11|12)|[JQKA])'), play_card),
-                                  CommandHandler('ng', new_game_test),
-                                  MessageHandler(Filters.text(['ng']), new_game_test)], # Testing
+                                   CommandHandler('play', start_game), ],  # pla PLay button an alle
+    conversation_states['play']: [
+        MessageHandler(Filters.text & Filters.regex('([♠♥♣♦]|[♠️♣️♥️♦️])((2|3|4|5|6|7|8|9|10|11|12)|[JQKA])'),
+                       play_card),
+        CommandHandler('ng', new_game_test),
+        MessageHandler(Filters.text(['ng']), new_game_test)],  # Testing
     conversation_states['menu']: [CommandHandler('rules', rules),
                                   CommandHandler('ruleslong', rules_long),
                                   CommandHandler('score', score),
-                                  CommandHandler('help', bot_help)], # TODO Back
+                                  CommandHandler('help', bot_help)],  # TODO Back
 
     conversation_states['deck_page1']: []
     # conversation_states['deck_page2']:[],
@@ -452,6 +486,7 @@ navigation = ConversationHandler(entry_point,
                                  [],  # fallbacks
                                  persistent=False,  # TODO do I need persistence?
                                  name="navigation")
+
 
 # -- End: Handlers -- #
 
