@@ -19,6 +19,7 @@ class Game:
 
         Input:
         players (iterable of int): unique id's for each player"""
+        self.last_eights_suit = ''
         self.scores = dict([(player, 0) for player in players])
         self.players = players
         self.round_over = True
@@ -78,6 +79,9 @@ class Game:
         Input:
         player (int): unique id for player
         card (Card): card to be played"""
+        if player == 000 and card == 000:
+            return MoveOutcome.crazy8
+
         if self.round_over:
             raise Exception("Invalid move. New round hasn't started yet.") # TODO: This could also be another MoveOutcome
 
@@ -164,6 +168,10 @@ class Game:
         # does all of the above in one line but is way less readable... :D
         # return max([valid_move(card, self.top_of_stack) for card in self.hands[1]])
 
+    def choose_suit(self, suit: str):  # TODO choose suit function
+        self.last_eights_suit = suit
+
+
 def valid_move(card_played, card_on_stack):
     """Returns true if it would be a valid move to play card_played on top of card_on_stack"""
     crazy8 = card_played.rank == 8
@@ -171,4 +179,5 @@ def valid_move(card_played, card_on_stack):
     suit_fits = card_played.suit == card_on_stack.suit
 
     return crazy8 or rank_fits or suit_fits
+
 

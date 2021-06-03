@@ -7,7 +7,7 @@ from telegram import  Bot
 
 MoveOutcome = Enum(
     "MoveOutcome", 
-    "valid_move round_won game_won invalid_move")
+    "valid_move round_won game_won invalid_move crazy8 ")
 
 suits = "♠♥♣♦"
 # suits = "shcd" # used for debugging. switch with line on top for release
