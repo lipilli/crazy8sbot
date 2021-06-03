@@ -51,7 +51,8 @@ keyboards = {
             ["♥","♠"],
             ["♣","♦"]
         ],
-        "rezise_keyboard":True
+        "rezise_keyboard":True,
+        "selective":True
     }
 }
 

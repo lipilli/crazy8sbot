@@ -14,7 +14,7 @@ Add this bot to your telegram group and play crazy eights with your friends.
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters, CallbackContext
 from telegram import Update, ReplyKeyboardMarkup
-from typing import List, Dict
+from tabulate import tabulate
 
 import logging as lg
 
@@ -49,6 +49,13 @@ Other:
     - In the bot: just rmove from player array
     - Do I need the left members array? 
 '''
+#TODO isb drew a card I need to send a keyboard to the perspn b4
+# also after a turn when saying XXX on he stack
+#TODO a button with /stack'd be nice
+# function that tells me what turn it is
+# The eights dont work
+#TODO New rounds don't start, the score is not doing what It should
+
 
 """
 Keyboards senden: 
@@ -126,20 +133,31 @@ def tell_top_of_stack(update: Update, context: CallbackContext):
 
 
 def leave_chat(update: Update, context: CallbackContext):
-    context.bot.leaveChat(update.effective_chat.id)
+    bot = context.bot
+    bot.send_message(chat_id=update.effective_chat.id,
+                     text="See you next time!👋")
+    bot.leaveChat(update.effective_chat.id)
 
 
 # TODO delete game fkt
-def end_game(context:CallbackContext):
+def end_game(update:Update, context:CallbackContext):
     """deletes a game from all games"""
     context.chat_data['players'] = {}
     context.players_left = {}
     context.chat_data['game'] = 0
     context.chat_data['turn'] = 0
+    leave_chat(update, context)
 
+def user_end_game(update:Update, context:CallbackContext):
+    admins = update.effective_chat.get_administrators()
+    admin_ids = [admin.user.id for admin in admins]
+    user = update.message.from_user.id
+    if user in admin_ids:
+        end_game(update, context)
+    else:
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text="I'm sorry, you must be admin to end the game 😟")
 
-
-# TODO hand_out hand
 def hand_out_hands(update: Update, context: CallbackContext) -> bool:
     """
     function that hands out cards to all players
@@ -159,6 +177,8 @@ def hand_out_hands(update: Update, context: CallbackContext) -> bool:
 
 def new_round(update: Update, context:CallbackContext, game: Game) -> bool:  # TODO add sending new keyboards
     game.new_round()
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text = f"Round {game.round} begins!")
     hand_out_hands_result = hand_out_hands(update, context)
     lg.debug(f"Hand out hands result: {hand_out_hands_result}")
     if (hand_out_hands_result):
@@ -343,6 +363,7 @@ def check_turn(update:Update, context:CallbackContext, user_id:int)-> bool:
                                  text=messages['wrong_turn'])
         return False
 
+#TODO chose suit function
 def choose_suit(update:Update, context:CallbackContext):
     lg.debug("A player wants to choose a suit")
     players = list(context.chat_data['players'])
@@ -350,6 +371,12 @@ def choose_suit(update:Update, context:CallbackContext):
     player = update.message.from_user.id
     suit = update.message.text
     if check_turn(update, context, player):
+        game = context.chat_data['game']
+        game.choose_suit(suit)
+    tell_top_of_stack(update, context)
+    tell_turn(update, context)
+    return conversation_states['play']
+
 
 
 
@@ -374,7 +401,7 @@ def play_card(update: Update, context: CallbackContext):  # TODO uff, muss das?
             #Detect 8:
             if Card(move).rank == 8:
                 context.bot.send_message(chat_id=update.effective_chat.id,
-                                         text=f"Careful a crazy 8😲!\n@{get_username_from_id(player)} what suit do you choose?",
+                                         text=f"Careful a crazy 8😲!\n@{get_username_from_id(update, context, player)} what suit do you choose?",
                                          reply_markup=keyboards['choose_suit'])
                 return conversation_states["coose_suit"]
             else:
@@ -407,7 +434,7 @@ def play_card(update: Update, context: CallbackContext):  # TODO uff, muss das?
                                      text="The game is over.\n" +
                                           get_users_name_from_id(update, context, game.leading_player) +
                                           ", you won! 🎉")
-            end_game(context)
+            end_game(update, context)
             leave_chat(update, context)
             return conversation_states['play']
 
@@ -416,12 +443,12 @@ def play_card(update: Update, context: CallbackContext):  # TODO uff, muss das?
         lg.debug("Player tried move on wrong turn")
         return conversation_states['play']
 
-    # TODO Feedback an player invalid move
     """
     check if it is your turn → store in context[next turn or sth]
     check I f I can play the card
     If not tell them they can't play rn
     """
+
 
 def draw_card(update, context): #TODO you should technically not pick a card if you can play a card
     lg.debug("PLayer pressed /draw")
@@ -473,7 +500,16 @@ def bot_help(update: Update, context: CallbackContext):
 
 # TODO: Send a score
 def score(update: Update, context: CallbackContext):
-    pass
+    game = context.chat_data['game']
+    players = context.chat_data['players']
+    scores = [["Pts.", "Player"]]
+    for player in players:
+        p_score = [game.get_hand_score(player), get_username_from_id(update, context, player)]
+        scores.append(p_score)
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text=tabulate(scores))
+    return conversation_states['play']
+
 
 
 # -- End: Command callback functions -- #
@@ -529,9 +565,9 @@ states = {  # TODO What if the person that created the chat leaves durin sb is i
                                   CommandHandler('rules', rules),
                                   CommandHandler('ruleslong', rules_long),
                                   CommandHandler('score', score),
-                                  CommandHandler('endgame', end_game),
+                                  CommandHandler('endgame', user_end_game),
                                   CommandHandler('ng', new_game_test)],  # TODO remove testing
-    conversation_states['choose_suit']: [MessageHandler(Filters.text & Filters.regex('([♠♥♣♦]|[♠️♣️♥️♦️])')), choose_suit]
+    conversation_states['choose_suit']: [MessageHandler(Filters.text & Filters.regex('([♠♥♣♦]|[♠️♣️♥️♦️])'), choose_suit)]
 }
 navigation = ConversationHandler(entry_point,
                                  states,
@@ -557,3 +593,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
