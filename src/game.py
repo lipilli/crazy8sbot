@@ -1,7 +1,17 @@
+"""Crazy8s Game
+Game class used for playing crazy eights in Telegram chat.
+    param:
+        Author: Deborah Djon
+        Date: .06.2021
+        Version:0.1
+        license: free
+"""
+
 import random
 import logging as lg
 from card import Card
 from constants import MoveOutcome
+from constants import suits
 
 lg.basicConfig(level=lg.DEBUG)
 
@@ -19,12 +29,16 @@ class Game:
 
         Input:
         players (iterable of int): unique id's for each player"""
+        self.last_eights_suit = ''
         self.scores = dict([(player, 0) for player in players])
         self.players = players
         self.round_over = True
         self.round = 0
         # TODO get a table with the players names and scores: https://stackoverflow.com/questions/35634238/how-to-save-a-pandas-dataframe-table-as-a-png
-    
+
+    def reset_round(self):
+        self.round-=1
+
     def new_round(self):
         """Start a new round. That means resetting deck and stack and dealing cards to all players."""
         self.hands = {}
@@ -80,13 +94,18 @@ class Game:
         Input:
         player (int): unique id for player
         card (Card): card to be played"""
+
         if self.round_over:
             raise Exception("Invalid move. New round hasn't started yet.") # TODO: This could also be another MoveOutcome
 
         hand = self.hands[player]
         
         # check if card can be played
-        if card in hand and valid_move(card, self.top_of_stack):
+        if card in hand and self.valid_move(card, self.top_of_stack):
+            # reset choice if last card was an 8
+            if self.top_of_stack.rank == 8:
+                self.last_eights_suit = ""
+            
             # play move
             hand.remove(card)
 
@@ -112,6 +131,10 @@ class Game:
                     return MoveOutcome.game_won
                 else:
                     return MoveOutcome.round_won
+            
+            # check if an 8 is played, earning the privilege to choose a suit
+            elif card.rank == 8:
+                return MoveOutcome.crazy8
 
             # nothing is won, just a normal valid move
             else:
@@ -157,7 +180,7 @@ class Game:
         can_move = False
 
         for card in self.hands[player]:
-            if valid_move(card, self.top_of_stack):
+            if self.valid_move(card, self.top_of_stack):
                 lg.debug(f"player {player} can move {str(card)}")
                 can_move = True
 
@@ -166,11 +189,26 @@ class Game:
         # does all of the above in one line but is way less readable... :D
         # return max([valid_move(card, self.top_of_stack) for card in self.hands[1]])
 
-def valid_move(card_played, card_on_stack):
-    """Returns true if it would be a valid move to play card_played on top of card_on_stack"""
-    crazy8 = card_played.rank == 8
-    rank_fits = card_played.rank == card_on_stack.rank
-    suit_fits = card_played.suit == card_on_stack.suit
+    def choose_suit(self, suit: str):  # TODO choose suit function
+        if suit in suits:
+            self.last_eights_suit = suit
+            lg.debug(f"{suit} was chosen as a new suit.")
+        else:
+            raise ValueError("Invalid suit")
 
-    return crazy8 or rank_fits or suit_fits
+
+    def valid_move(self, card_played, card_on_stack):
+        """Returns true if it would be a valid move to play card_played on top of card_on_stack"""
+
+        played_8 = card_played.rank == 8
+        rank_fits = card_played.rank == card_on_stack.rank
+        suit_fits = card_played.suit == card_on_stack.suit
+        valid_card_on_top_of_8 = card_played.suit == self.last_eights_suit
+
+        # irgnoring suit of top of stack if it is an 8
+        if self.top_of_stack.rank == 8:
+            return played_8 or valid_card_on_top_of_8
+        else:
+            return played_8 or rank_fits or suit_fits
+
 
