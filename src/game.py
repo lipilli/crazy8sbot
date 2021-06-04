@@ -1,3 +1,12 @@
+"""Crazy8s Game
+Game class used for playing crazy eights in Telegram chat.
+    param:
+        Author: Deborah Djon
+        Date: .06.2021
+        Version:0.1
+        license: free
+"""
+
 import random
 import logging as lg
 from card import Card
@@ -80,8 +89,6 @@ class Game:
         Input:
         player (int): unique id for player
         card (Card): card to be played"""
-        if player == 000 and card == 000:
-            return MoveOutcome.crazy8
 
         if self.round_over:
             raise Exception("Invalid move. New round hasn't started yet.") # TODO: This could also be another MoveOutcome

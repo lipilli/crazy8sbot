@@ -1,3 +1,12 @@
+"""Crazy8s Card
+Card class used for playing crazy eights in Telegram chat.
+    param:
+        Author: Deborah Djon
+        Date: .06.2021
+        Version:0.1
+        license: free
+"""
+
 import logging as lg
 import constants
 

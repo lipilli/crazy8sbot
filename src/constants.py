@@ -1,3 +1,11 @@
+"""Crazy8s Constants
+Constants used for playing crazy eights in Telegram chat.
+    param:
+        Author: Deborah Djon
+        Date: .06.2021
+        Version:0.1
+        license: free
+"""
 from enum import Enum
 from telegram import  Bot
 

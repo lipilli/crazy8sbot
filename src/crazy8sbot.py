@@ -1,19 +1,17 @@
-"""
-Bot for playing crazy eights.
+"""Crazy8s Bot
+Bot for playing crazy eights in Telegram chat.
     param:
         Author: Deborah Djon
         Date: .06.2021
         Version:0.1
         license: free
-
-Add this bot to your telegram group and play crazy eights with your friends.
-
 """
+
 
 # TODO: warum rundedt int nochmal ab?
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters, CallbackContext
-from telegram import Update, ReplyKeyboardMarkup
+from telegram import Update, ReplyKeyboardMarkup, User
 from typing import List, Dict
 
 import logging as lg
@@ -30,7 +28,9 @@ import constants as c
 lg.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=lg.DEBUG)
 
 # TODO: command handlers:score, endgame
-# TODO: Figure out when to use lg.debug and when to use logging.info
+# TODO: figure out when to use lg.debug and when to use logging.info
+# TODO: New keinen Nachricht
+# TODO: Falsche Score angaben
 
 '''Goal
 Basic game playable (Goal Reached when I have seen all these in action once)
@@ -60,13 +60,19 @@ Keyboards senden:
 
 # -- Helper functions -- #
 
-def stop(update: Update, context: CallbackContext):  # nur admin
-    context.bot.send_message(chat_id=update.effective_chat.id, text="See ya 😋")
-    ##delete game instance
-    pass
 
+def hands_log_str(update: Update, context: CallbackContext)->str:
+    """generate string for logging the hands
+        crates a string that is used for logging the hands belonging to each player in the game
 
-def hands_log_str(update: Update, context: CallbackContext):
+        param:
+            update (telegram.Update): represents incoming update - Accordingly in all following functions
+            context (telegram.ext.CallbackContext):  callback called by telegram.ext.Handler, stores information about the bot, the chat and users and more
+
+        test:
+            - check that type is string
+            - check number of players is >= "[" → mark beginning of hand
+        """
     players = context.chat_data['players']
     my_game = context.chat_data['game']
     hands_log = "Hands:\n"
@@ -78,12 +84,37 @@ def hands_log_str(update: Update, context: CallbackContext):
     return hands_log
 
 
-def get_user_from_id(update: Update, context: CallbackContext, user_id:int):
+def get_user_from_id(update: Update, context: CallbackContext, user_id:int) -> User:
+    """get the user from id
+        crates a string that is used for logging the hands belonging to each player in the game
+
+        param:
+            update (telegram.Update): represents incoming update - Accordingly in all following functions
+            context (telegram.ext.CallbackContext):  callback called by telegram.ext.Handler, stores information about the bot, the chat and users and more
+            user_id(int): player id
+        test:
+            - check that type is User
+            - check it is the right user: compare user.id with user_id
+        """
     return context.bot.get_chat_member(update.message.chat.id, int(user_id)).user
 
 
-
 def get_username_from_id(update: Update, context: CallbackContext, user_id:int) -> str:
+    """get the username from id
+       returns a username based on provided user id
+
+        param:
+            update (telegram.Update): represents incoming update - Accordingly in all following functions
+            context (telegram.ext.CallbackContext):  callback called by telegram.ext.Handler, stores information about the bot, the chat and users and more
+            user_id(int): player id
+
+        raises Value Error: is raised when user is missing username
+
+        test:
+            - check that type is string
+            - check username has no illegal characters
+    """
+
     user = get_user_from_id(update, context, user_id)
     if user.username == None:
         if user.last_name == None:
@@ -96,20 +127,53 @@ def get_username_from_id(update: Update, context: CallbackContext, user_id:int) 
         raise ValueError(f"{name} has no username", name)
     else: return user.username
 
+
 def get_users_name_from_id(update: Update, context: CallbackContext, user_id:int) -> str:
+    """get the user's name from id
+       returns a username based on provided user id, if user has no username the full name is provided
+
+        param:
+            update (telegram.Update): represents incoming update - Accordingly in all following functions
+            context (telegram.ext.CallbackContext):  callback called by telegram.ext.Handler, stores information about the bot, the chat and users and more
+            user_id(int): player id
+        test:
+            - check that type is string
+            - check username/name has no illegal characters
+    """
+
     try:
         return get_username_from_id(update, context, user_id)
     except ValueError as e:
         return e.args[1]
 
 
+def get_current_players(update: Update, context: CallbackContext)->set:
+    """get list of current players
+       returns a set of strings containing the user's name and their id
 
-def get_current_players(update: Update, context: CallbackContext):
+        param:
+            update (telegram.Update): represents incoming update - Accordingly in all following functions
+            context (telegram.ext.CallbackContext):  callback called by telegram.ext.Handler, stores information about the bot, the chat and users and more
+        test:
+            - check that type is set
+            - check legth set = length of context.chat_data['players']
+    """
     return {str(player) + ':' + get_users_name_from_id(update, context, player)
             for player in context.chat_data['players']}
 
 
 def tell_turn(update: Update, context: CallbackContext):
+    """notify who's turn it is
+       sends message to respective chat saying who'se turn it is
+
+        param:
+            update (telegram.Update): represents incoming update - Accordingly in all following functions
+            context (telegram.ext.CallbackContext):  callback called by telegram.ext.Handler, stores information about the bot, the chat and users and more
+
+        test:
+            - check that type is string
+            - check username/name has no illegal characters
+    """
     players = list(context.chat_data['players'])
     at_turn = context.chat_data['turn']
     player_at_turn = get_username_from_id(update, context, players[at_turn])
@@ -349,7 +413,7 @@ def choose_suit(update:Update, context:CallbackContext):
     at_turn = context.chat_data['turn']
     player = update.message.from_user.id
     suit = update.message.text
-    if check_turn(update, context, player):
+    if check_turn(update, context, player):pass
 
 
 
@@ -531,7 +595,7 @@ states = {  # TODO What if the person that created the chat leaves durin sb is i
                                   CommandHandler('score', score),
                                   CommandHandler('endgame', end_game),
                                   CommandHandler('ng', new_game_test)],  # TODO remove testing
-    conversation_states['choose_suit']: [MessageHandler(Filters.text & Filters.regex('([♠♥♣♦]|[♠️♣️♥️♦️])')), choose_suit]
+    conversation_states['choose_suit']: [MessageHandler(Filters.text & Filters.regex('([♠♥♣♦]|[♠️♣️♥️♦️])'), choose_suit) ]
 }
 navigation = ConversationHandler(entry_point,
                                  states,
