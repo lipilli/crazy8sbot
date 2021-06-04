@@ -35,7 +35,10 @@ class Game:
         self.round_over = True
         self.round = 0
         # TODO get a table with the players names and scores: https://stackoverflow.com/questions/35634238/how-to-save-a-pandas-dataframe-table-as-a-png
-    
+
+    def reset_round(self):
+        self.round-=1
+
     def new_round(self):
         """Start a new round. That means resetting deck and stack and dealing cards to all players."""
         self.hands = {}
