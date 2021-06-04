@@ -407,15 +407,32 @@ def check_turn(update:Update, context:CallbackContext, user_id:int)-> bool:
                                  text=messages['wrong_turn'])
         return False
 
-def choose_suit(update:Update, context:CallbackContext):
+
+def choose_suit(update:Update, context:CallbackContext) -> int:
     lg.debug("A player wants to choose a suit")
-    players = list(context.chat_data['players'])
-    at_turn = context.chat_data['turn']
     player = update.message.from_user.id
     suit = update.message.text
-    if check_turn(update, context, player):pass
-
-
+    game = context.chat_data['game']
+    choice = ''
+    if check_turn(update, context, player):
+        if suit == '♠' or suit == '♠️':
+            choice = '♠'
+            game.choose_suit(choice)
+        elif suit == '♥' or suit == '♥️':
+            choice = '♥'
+            game.choose_suit(choice)
+        elif suit == '♣' or suit == '♣️':
+            choice = '♣'
+            game.choose_suit(choice)
+        elif suit == '♦' or suit == '♦️':
+            choice = '♦'
+            game.choose_suit(choice)
+        lg.debug(f"Suit {choice} was chosen")
+        lg.debug(f"last eight suit of game is {game.last_eights_suit}")
+    tell_turn(update, context)
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text=f"Continue with suit {game.last_eights_suit}")
+    return conversation_states['play']
 
 
 def play_card(update: Update, context: CallbackContext):  # TODO uff, muss das?
@@ -436,17 +453,15 @@ def play_card(update: Update, context: CallbackContext):  # TODO uff, muss das?
         if move_return == MoveOutcome.valid_move:
             lg.debug("Player made valid move")
             #Detect 8:
-            if Card(move).rank == 8:
-                context.bot.send_message(chat_id=update.effective_chat.id,
-                                         text=f"Careful a crazy 8😲!\n@{get_username_from_id(player)} what suit do you choose?",
-                                         reply_markup=keyboards['choose_suit'])
-                return conversation_states["coose_suit"]
-            else:
-                context.chat_data["turn"] = (context.chat_data["turn"] + 1) % len(context.chat_data['players'])
-                tell_top_of_stack(update, context)
-                tell_turn(update, context)
+            context.chat_data["turn"] = (context.chat_data["turn"] + 1) % len(context.chat_data['players'])
+            tell_top_of_stack(update, context)
+            tell_turn(update, context)
             return conversation_states['play']
-
+        elif move_return == MoveOutcome.crazy8 :
+            context.bot.send_message(chat_id=update.effective_chat.id,
+                                     text=f"Careful a crazy 8😲!\n@{get_username_from_id(update, context, player)} what suit do you choose?",
+                                     reply_markup=keyboards['choose_suit'])
+            return conversation_states['choose_suit']
         elif move_return == MoveOutcome.invalid_move:
             lg.debug("Player made invalid move")
             context.bot.send_message(chat_id=update.effective_chat.id,
@@ -595,7 +610,7 @@ states = {  # TODO What if the person that created the chat leaves durin sb is i
                                   CommandHandler('score', score),
                                   CommandHandler('endgame', end_game),
                                   CommandHandler('ng', new_game_test)],  # TODO remove testing
-    conversation_states['choose_suit']: [MessageHandler(Filters.text & Filters.regex('([♠♥♣♦]|[♠️♣️♥️♦️])'), choose_suit) ]
+    conversation_states['choose_suit']: [MessageHandler(Filters.text & Filters.regex('([♠♥♣♦]|[♠️♣️♥️♦️])'), choose_suit)]
 }
 navigation = ConversationHandler(entry_point,
                                  states,
