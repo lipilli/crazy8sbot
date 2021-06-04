@@ -1,3 +1,11 @@
+"""Crazy8s Constants
+Constants used for playing crazy eights in Telegram chat.
+    param:
+        Author: Deborah Djon
+        Date: .06.2021
+        Version:0.1
+        license: free
+"""
 from enum import Enum
 from telegram import  Bot
 
@@ -7,7 +15,7 @@ from telegram import  Bot
 
 MoveOutcome = Enum(
     "MoveOutcome", 
-    "valid_move round_won game_won invalid_move")
+    "valid_move round_won game_won invalid_move crazy8 ")
 
 suits = "♠♥♣♦"
 # suits = "shcd" # used for debugging. switch with line on top for release

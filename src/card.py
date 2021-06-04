@@ -1,4 +1,12 @@
-# %%
+"""Crazy8s Card
+Card class used for playing crazy eights in Telegram chat.
+    param:
+        Author: Deborah Djon
+        Date: .06.2021
+        Version:0.1
+        license: free
+"""
+
 import logging as lg
 import constants
 
@@ -90,7 +98,7 @@ class Card:
     
     @property
     def suit(self):
-        """Return rank of card as a string. These ranks are defined in constants.rank"""
+        """Return suit of card as a string. These suits are defined in constants.rank"""
         return constants.suits[self.int_representation % 4]
 
     @property
@@ -110,4 +118,3 @@ class Card:
 
         else:
             return rank
-# %%
