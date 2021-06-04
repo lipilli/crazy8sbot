@@ -7,22 +7,18 @@ Bot for playing crazy eights in Telegram chat.
         license: free
 """
 
-# TODO: warum rundedt int nochmal ab?
-# Todo players who are not at turn can
 # TODO: commannd that give me my keyboard if I loose it
-# TODO: highlight eight
 from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters, CallbackContext
 from telegram import Update, ReplyKeyboardMarkup, User
 from tabulate import tabulate
-from time import  sleep
+from time import sleep
 import logging as lg
 
 # custom modules
 
-from constants import messages, conversation_states, keyboards, BOT_TOKEN, hand_filler, MoveOutcome, TESTBOTS
+from constants import messages, conversation_states, keyboards, BOT_TOKEN, MoveOutcome
 from card import Card
 from game import Game
-import constants as c
 
 # setup lg
 # source: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Extensions-%E2%80%93-Your-first-Bot
@@ -246,7 +242,7 @@ def hand_out_hands(update: Update, context: CallbackContext) -> bool:
         return False
 
 
-def tell_round(update:Update, context:CallbackContext):
+def tell_round(update: Update, context: CallbackContext):
     """tells chat what round the game is in
         tells chat what round the game is in
         param:
@@ -287,7 +283,7 @@ def new_round(update: Update, context: CallbackContext) -> bool:
         return False
 
 
-def make_hand_keyboard(game: Game, player: int)->ReplyKeyboardMarkup:  # had page
+def make_hand_keyboard(game: Game, player: int) -> ReplyKeyboardMarkup:  # had page
     """create hands keyboard
         creates keyboard containing cards in the hand of one player
 
@@ -346,6 +342,7 @@ def check_turn(update: Update, context: CallbackContext, user_id: int) -> bool:
                                  text=messages['wrong_turn'])
         return False
 
+
 def next_turn(context: CallbackContext):
     """increment turn
         register next player at turn
@@ -360,34 +357,12 @@ def next_turn(context: CallbackContext):
     """
     context.chat_data["turn"] = (context.chat_data["turn"] + 1) % len(context.chat_data['players'])
 
+
 # -- End: Helper functions -- #
-
-# -- Testing -- #
-def new_game_test(update: Update, context: CallbackContext):
-    # TODO remove for real application
-    lg.debug("New game started")
-    context.chat_data['players'] = {857950388, 1848549159}  # Cedric 287077960
-    context.players_left = {}
-    context.chat_data['game'] = 0
-    context.chat_data['turn'] = 0
-    # initialize the game
-    context.chat_data['game'] = Game(list(context.chat_data['players']))
-    new_round_succeeded = new_round(update, context)
-    if new_round_succeeded:
-        lg.debug(f"Game initialized {hands_log_str(update, context)}")
-        tell_round(update, context)
-        tell_turn(update, context)
-        tell_top_of_stack(update, context)
-        return conversation_states['play']
-    else:
-        lg.debug(f"New round could not be started")
-        return conversation_states['lobby']
-
-# -- End: Testing -- #
 
 
 # -- Message handler callback functions --#
-def tell_turn(update: Update, context: CallbackContext)->int:
+def tell_turn(update: Update, context: CallbackContext):
     """notify who's turn it is
        sends message to respective chat saying who'se turn it is
 
@@ -406,10 +381,10 @@ def tell_turn(update: Update, context: CallbackContext)->int:
     hand_keyboard = make_hand_keyboard(game, players[at_turn])
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text="It's your turn @" + player_at_turn,
-                             reply_markup=hand_keyboard)  # TODO faulty?
+                             reply_markup=hand_keyboard)
 
 
-def new_game(update: Update, context: CallbackContext)->int:
+def new_game(update: Update, context: CallbackContext) -> int:
     """initiates new game
         function that initiates new game
         triggered when bot is added to a group chat, the roup can be new or existing
@@ -427,7 +402,7 @@ def new_game(update: Update, context: CallbackContext)->int:
     sender = update.message.from_user.id
     lg.info(f"{get_users_name_from_id(update, context, sender)} created the chat {update.message.chat.title}")
     context.chat_data['players'] = {sender}
-    context.players_left = {}#TODO delete
+    context.players_left = {}  # TODO delete
     context.chat_data['turn'] = 0
     context.chat_data['game'] = 0
     lg.info(f"Players initialized with {str(context.chat_data['players'])} "
@@ -438,7 +413,7 @@ def new_game(update: Update, context: CallbackContext)->int:
     return conversation_states['lobby']
 
 
-def join(update: Update, context: CallbackContext)->int:
+def join(update: Update, context: CallbackContext) -> int or None:
     """for users wanting to join the game
         for users wanting to join the game, is needed for registering players when bot was added to existing group
         the bot does not have access to the users in a group and must keep track of them internally,
@@ -462,7 +437,7 @@ def join(update: Update, context: CallbackContext)->int:
     return conversation_states['lobby']
 
 
-def bot_was_added_to_group(update: Update, context: CallbackContext)->int:
+def bot_was_added_to_group(update: Update, context: CallbackContext) -> int:
     """registers that bot was added to an existing group
         registers if bot was added to existing group and if correct initiates a new game
 
@@ -483,7 +458,7 @@ def bot_was_added_to_group(update: Update, context: CallbackContext)->int:
         return None
 
 
-def new_player(update: Update, context: CallbackContext)->int:
+def new_player(update: Update, context: CallbackContext) -> int:
     """new player in group
         triggered when new member is in the group, that can be the bot or any other user
 
@@ -514,8 +489,8 @@ def new_player(update: Update, context: CallbackContext)->int:
     return conversation_states['lobby']
 
 
-#TODO Test player left
-def player_left(update: Update, context: CallbackContext)->int:
+# TODO Test player left
+def player_left(update: Update, context: CallbackContext) -> int:
     """remove player that left the group
         removes user that left the group from game
 
@@ -542,7 +517,7 @@ def player_left(update: Update, context: CallbackContext)->int:
             return conversation_states['lobby']
 
 
-def start_game(update: Update, context: CallbackContext)->int:
+def start_game(update: Update, context: CallbackContext) -> int:
     """begin game
         begins game and first round
 
@@ -588,7 +563,7 @@ def start_game(update: Update, context: CallbackContext)->int:
         return conversation_states['lobby']
 
 
-def choose_suit(update: Update, context: CallbackContext)->int:
+def choose_suit(update: Update, context: CallbackContext) -> int:
     """chose suit for 8
         choose suit for crazy 8
 
@@ -629,10 +604,11 @@ def choose_suit(update: Update, context: CallbackContext)->int:
         next_turn(context)
         tell_turn(update, context)
         return conversation_states['play']
-    else: return  conversation_states['choose_suit']
+    else:
+        return conversation_states['choose_suit']
 
 
-def play_card(update: Update, context: CallbackContext)->int:
+def play_card(update: Update, context: CallbackContext) -> int or None:
     """play card
         interpret the card a player tries to put on the card stack
 
@@ -695,7 +671,7 @@ def play_card(update: Update, context: CallbackContext)->int:
                                           get_users_name_from_id(update, context, game.leading_player) +
                                           ", you won! 🎉")
             score(update, context)
-            sleep(2) #ensure game is not ended before score can be displayed
+            sleep(2)  # ensure game is not ended before score can be displayed
             end_game(update, context)
             leave_chat(update, context)
             return None
@@ -746,7 +722,7 @@ def draw_card(update, context):
     return conversation_states['play']
 
 
-def tell_top_of_stack(update:Update, context:CallbackContext):
+def tell_top_of_stack(update: Update, context: CallbackContext):
     """tell what card is on top of the card stack
         tells what card is on top of the card stack
 
@@ -767,7 +743,7 @@ def tell_top_of_stack(update:Update, context:CallbackContext):
     return conversation_states['play']
 
 
-def unknown_command(update:Update, context:CallbackContext):
+def unknown_command(update: Update, context: CallbackContext):
     """tells command is not known
         triggered when non-existing command is called or command is not available in current conversation state
 
@@ -861,21 +837,6 @@ def score(update: Update, context: CallbackContext):
 # -- End: Command callback functions -- #
 
 
-"""
-Test script 
-import crazy8sbot as c
-import game as g
-from telegram import Bot
-cb = Bot("1665894053:AAHxd8VUNhV1Q8ncLrF9IvljRPcGG9zfH60")
-mg = g.Game([1,2,3])
-mg.new_round()
-for i in range (33): mg.draw(1)
-keyboard = c.make_hand_keyboard(mg, 1)
-cb.send_message(chat_id =-540927526, text="hi", reply_markup=c.make_hand_keyboard(mg, 1))
-"""
-
-
-
 # -- Handlers -- #
 
 unknown_command_handler = MessageHandler(Filters.command, unknown_command)
@@ -883,30 +844,29 @@ unknown_command_handler = MessageHandler(Filters.command, unknown_command)
 # source https://github.com/FrtZgwL/CoronaBot/blob/master/corona_bot.py
 entry_point = [MessageHandler(Filters.status_update.chat_created, new_game),
                MessageHandler(Filters.status_update.new_chat_members, bot_was_added_to_group),
-               CommandHandler('newgame', new_game),
-               CommandHandler('ng', new_game_test)]  # Testing
+               CommandHandler('newgame', new_game)]
 # states conversation can be in an available Message/CommandHandlers
 states = {
     conversation_states['lobby']: [MessageHandler(Filters.status_update.new_chat_members, new_player),
                                    MessageHandler(Filters.status_update.left_chat_member, player_left),
                                    CommandHandler('play', start_game),
-                                   CommandHandler('ng', new_game_test),  # TODO remove testing
                                    CommandHandler('help', bot_help),
                                    CommandHandler('rules', rules),
                                    CommandHandler('ruleslong', rules_long),
                                    CommandHandler('join', join)],
-    conversation_states['play']: [MessageHandler(Filters.text & Filters.regex('([♠♥♣♦]|[♠️♣️♥️♦️])((2|3|4|5|6|7|8|9|10|11|12)|[JQKA])'),
+    conversation_states['play']: [
+                                    MessageHandler(Filters.text & Filters.regex('([♠♥♣♦]|[♠️♣️♥️♦️])((2|3|4|5|6|7|8|9|10|11|12)|[JQKA])'),
                                                    play_card),
-                                  CommandHandler('draw', draw_card),
-                                  CommandHandler('stack', tell_top_of_stack),
-                                  CommandHandler('help', bot_help),
-                                  CommandHandler('rules', rules),
-                                  CommandHandler('ruleslong', rules_long),
-                                  CommandHandler('score', score),
-                                  CommandHandler('endgame', user_end_game),
-                                  CommandHandler('ng', new_game_test),
-                                  CommandHandler('turn', tell_turn)],  # TODO remove testing
-    conversation_states['choose_suit']: [MessageHandler(Filters.text & Filters.regex('([♠♥♣♦]|[♠️♣️♥️♦️])'), choose_suit)]
+                                    CommandHandler('draw', draw_card),
+                                    CommandHandler('stack', tell_top_of_stack),
+                                    CommandHandler('help', bot_help),
+                                    CommandHandler('rules', rules),
+                                    CommandHandler('ruleslong', rules_long),
+                                    CommandHandler('score', score),
+                                    CommandHandler('endgame', user_end_game),
+                                    CommandHandler('turn', tell_turn)],
+    conversation_states['choose_suit']: [
+        MessageHandler(Filters.text & Filters.regex('([♠♥♣♦]|[♠️♣️♥️♦️])'), choose_suit)]
 }
 
 navigation = ConversationHandler(entry_point,
@@ -915,6 +875,8 @@ navigation = ConversationHandler(entry_point,
                                  persistent=False,
                                  name="navigation",
                                  per_user=False)
+
+
 # -- End: Handlers -- #
 
 
