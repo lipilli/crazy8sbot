@@ -2,7 +2,7 @@
 Bot for playing crazy eights in Telegram chat.
     param:
         Author: Deborah Djon
-        Date: .06.2021
+        Date: 06.06.2021
         Version:0.1
         license: free
 """
@@ -20,7 +20,7 @@ from constants import messages, conversation_states, keyboards, BOT_TOKEN, MoveO
 from card import Card
 from game import Game
 
-# setup lg
+# setup logging
 # source: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Extensions-%E2%80%93-Your-first-Bot
 lg.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=lg.DEBUG)
 
@@ -437,7 +437,7 @@ def join(update: Update, context: CallbackContext) -> int or None:
     return conversation_states['lobby']
 
 
-def bot_was_added_to_group(update: Update, context: CallbackContext) -> int:
+def bot_was_added_to_group(update: Update, context: CallbackContext) -> int or None:
     """registers that bot was added to an existing group
         registers if bot was added to existing group and if correct initiates a new game
 
@@ -875,10 +875,7 @@ navigation = ConversationHandler(entry_point,
                                  persistent=False,
                                  name="navigation",
                                  per_user=False)
-
-
 # -- End: Handlers -- #
-
 
 def main():
     """main function

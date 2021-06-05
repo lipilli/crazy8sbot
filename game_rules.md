@@ -1,7 +1,14 @@
-# Crazy 8s
 
 
-## General
+
+
+
+
+
+## Crazy 8s Game Rules
+
+
+### General
 
 * Standard 52-card pack
 * 2-5 players (3players)
@@ -9,8 +16,7 @@
 * The player to get rid of all their cards first, wins the round
 
 
-
-##  Card Values
+###  Card Values
 
 The player who is the first to have no cards left wins the game. The  winning player collects from each other player the value of the cards  remaining in that player’s hand as follows:
 
@@ -20,8 +26,7 @@ The player who is the first to have no cards left wins the game. The  winning pl
 * Each other card is the according value
 
 
-
-## Start
+### Start
 
 * Everyone gets 5 cards
 * The one to joins first, starts
@@ -30,15 +35,10 @@ The player who is the first to have no cards left wins the game. The  winning pl
 
 
 
-## Play
+### Play
 
 * Every card (other than eight) you play must match the suit or denomination of the card on the deck.
 * The eights are crazy! Play it at anytime and define a new suit. The next player must play an eigt or a card of matching suit. 
 * If you can't play, draw cards until you can play. 
 * If the deck is empty and you can't play you are passed
 
-
-
-I need to be able to: 
-
-* print out tables (score images)

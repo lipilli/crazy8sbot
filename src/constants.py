@@ -32,20 +32,6 @@ TESTBOT_TOKEN2 = "1792398859:AAGoeCc9y2GX3MsUaHPRd0f2I9_lLxTUFgA"
 TESTBOT_TOKEN3 = "1897111191:AAFvK3sB-9bdd-alOPWaWYTzzWKp5sGGy4w"
 TESTBOT_TOKEN4 = "1879219956:AAH5bpXKl1yxyCEwsZ953sS5mc4DO9RHGbw"
 
-BOT1 = Bot(TESTB0T_TOKEN1)
-BOT2 = Bot(TESTBOT_TOKEN2)
-BOT3 = Bot(TESTBOT_TOKEN3)
-BOT4 = Bot(TESTBOT_TOKEN4)
-
-TESTBOTS = [BOT1, BOT2, BOT3, BOT4, Bot(BOT_TOKEN)]
-def send(bot, message):
-    bot.send_message(-597750631, message)
-
-def rmb():
-    for bot in TESTBOTS:
-        bot.leave_chat(-597750631)
-
-# Testing ---
 
 keyboards = {
     'play': {
