@@ -39,6 +39,6 @@ The player who is the first to have no cards left wins the game. The  winning pl
 
 * Every card (other than eight) you play must match the suit or denomination of the card on the deck.
 * The eights are crazy! Play it at anytime and define a new suit. The next player must play an eigt or a card of matching suit. 
-* If you can't play, draw cards until you can play. 
+* If you can't play, draw a card. 
 * If the deck is empty and you can't play you are passed
 

@@ -6,16 +6,14 @@ Bot for playing crazy eights in Telegram chat.
         Version:0.1
         license: free
 """
-
-# TODO: commannd that give me my keyboard if I loose it
+from telegram.error import TimedOut
 from telegram.ext import Updater, CommandHandler, MessageHandler, ConversationHandler, Filters, CallbackContext
-from telegram import Update, ReplyKeyboardMarkup, User
+from telegram import Update, ReplyKeyboardMarkup, User, ReplyKeyboardRemove
 from tabulate import tabulate
 from time import sleep
 import logging as lg
 
 # custom modules
-
 from constants import messages, conversation_states, keyboards, BOT_TOKEN, MoveOutcome
 from card import Card
 from game import Game
@@ -29,18 +27,16 @@ lg.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=lg.DEBU
 
 
 # TODO New rounds don't start, the score is not doing what It should
-# TODO private function mit __ kennzeichnen
-# TODO check eq function
 
 # -- Helper functions -- #
 
 def hands_log_str(update: Update, context: CallbackContext) -> str:
-    """generate string for logging the hands
-        crates a string that is used for logging the hands belonging to each player in the game
+    """Generate string for logging the hands.
+        Crates a string that is used for logging the hands belonging to each player in the game.
 
         param:
-            update (telegram.Update): represents incoming update
-            context (telegram.ext.CallbackContext):  callback called by telegram.ext.Handler, stores information about the bot, the chat and users and more
+            update (telegram.Update): represents incoming update.
+            context (telegram.ext.CallbackContext):  callback called by telegram.ext.Handler, stores information about the bot, the chat and users and more.
 
         test:
             - check that return type is string
@@ -58,13 +54,13 @@ def hands_log_str(update: Update, context: CallbackContext) -> str:
 
 
 def get_user_from_id(update: Update, context: CallbackContext, user_id: int) -> User:
-    """get the user from id
-        crates a string that is used for logging the hands belonging to each player in the game
+    """Get the user from id.
+        Crates a string that is used for logging the hands belonging to each player in the game.
 
         param:
-            update (telegram.Update): represents incoming update - Accordingly in all following functions
-            context (telegram.ext.CallbackContext):  callback called by telegram.ext.Handler, stores information about the bot, the chat and users and more
-            user_id (int): id of user that is searched
+            update (telegram.Update): represents incoming update - Accordingly in all following functions.
+            context (telegram.ext.CallbackContext):  callback called by telegram.ext.Handler, stores information about the bot, the chat and users and more.
+            user_id (int): id of user that is searched.
         test:
             - check that return type is User
             - check it is the right user: compare user.id with user_id
@@ -73,8 +69,8 @@ def get_user_from_id(update: Update, context: CallbackContext, user_id: int) -> 
 
 
 def get_username_from_id(update: Update, context: CallbackContext, user_id: int) -> str:
-    """get the username from id
-        returns a username based on provided user id
+    """Get the username from id.
+        Returns a username based on provided user id.
 
         param:
             update (telegram.Update): represents incoming update - Accordingly in all following functions
@@ -84,12 +80,12 @@ def get_username_from_id(update: Update, context: CallbackContext, user_id: int)
         raises Value Error: is raised when user is missing username
 
         test:
-            - check that return type is string
-            - check username has no illegal characters
+            - check that return type is string.
+            - check username has no illegal characters.
     """
     user = get_user_from_id(update, context, user_id)
-    if user.username == None:
-        if user.last_name == None:
+    if user.username is None:
+        if user.last_name is None:
             name = user.first_name.replace(' ', '_')
         else:
             name = user.first_name.replace(' ', '_') + "_" + user.last_name.replace(' ', '_')
@@ -102,13 +98,13 @@ def get_username_from_id(update: Update, context: CallbackContext, user_id: int)
 
 
 def get_users_name_from_id(update: Update, context: CallbackContext, user_id: int) -> str:
-    """get the user's name from id
-        returns a username based on provided user id, if user has no username the full name is provided
+    """Get the user's name from id.
+        Returns a username based on provided user id, if user has no username the full name is provided.
 
         param:
-            update (telegram.Update): represents incoming update - Accordingly in all following functions
-            context (telegram.ext.CallbackContext):  callback called by telegram.ext.Handler, stores information about the bot, the chat and users and more
-            user_id (int): user for which name is searched
+            update (telegram.Update): represents incoming update - Accordingly in all following functions.
+            context (telegram.ext.CallbackContext):  callback called by telegram.ext.Handler, stores information about the bot, the chat and users and more.
+            user_id (int): user for which name is searched.
         test:
             - check that return type is string
             - check username/name has no illegal characters
@@ -151,7 +147,7 @@ def tell_who_put_what_on_stack(update: Update, context: CallbackContext):
     player_that_made_move = list(context.chat_data['players'])[context.chat_data['turn']]
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text=f"@{get_username_from_id(update, context, player_that_made_move)} put {card_on_stack} on the stack",
-                             reply_markup=make_hand_keyboard(game, player_that_made_move))
+                             reply_markup=make_hand_keyboard(game, player_that_made_move, False))
 
 
 def leave_chat(update: Update, context: CallbackContext):
@@ -167,7 +163,9 @@ def leave_chat(update: Update, context: CallbackContext):
     """
     bot = context.bot
     bot.send_message(chat_id=update.effective_chat.id,
-                     text="See you next time!👋")
+                     text="See you next time!👋",
+                     reply_markup=ReplyKeyboardRemove(remove_keyboard = True, selective = False))
+    end_game(update, context)
     bot.leaveChat(update.effective_chat.id)
 
 
@@ -185,7 +183,6 @@ def end_game(update: Update, context: CallbackContext):
             - bot side: check that bot cannot receive messages from the chat
     """
     context.chat_data['players'] = {}
-    context.players_left = {}
     context.chat_data['game'] = 0
     context.chat_data['turn'] = 0
     leave_chat(update, context)
@@ -204,16 +201,17 @@ def user_end_game(update: Update, context: CallbackContext):
             - bot side: check that bot cannot send messages to the chat
             - bot side: check that bot cannot receive messages from the chat
     """
-
-    admins = update.effective_chat.get_administrators()
-    admin_ids = [admin.user.id for admin in admins]
-    user = update.message.from_user.id
-    if user in admin_ids:
-        end_game(update, context)
-    else:
-        context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text="I'm sorry, you must be admin to end the game 😟")
-
+    try:
+        admins = update.effective_chat.get_administrators()
+        admin_ids = [admin.user.id for admin in admins]
+        user = update.message.from_user.id
+        if user in admin_ids:
+            end_game(update, context)
+        else:
+            context.bot.send_message(chat_id=update.effective_chat.id,
+                                     text="I'm sorry, you must be admin to end the game 😟")
+    except TimedOut:
+        leave_chat(update, context)
 
 def hand_out_hands(update: Update, context: CallbackContext) -> bool:
     """sends hands keyboards to players
@@ -232,15 +230,15 @@ def hand_out_hands(update: Update, context: CallbackContext) -> bool:
     game = context.chat_data['game']
     try:
         player_usernames = [get_username_from_id(update, context, player) for player in players]
-        for i in range(len(players)):
-            hand_keyboard = make_hand_keyboard(game, players[i])
-            context.bot.send_message(chat_id=update.effective_chat.id,
-                                     text=f"Handing out cards to @{player_usernames[i]}", reply_markup=hand_keyboard)
-        return True
     except Exception as e:
         lg.debug(f"Exception in hand_out_hands:{str(e.args)}")
         return False
 
+    for i in range(len(players)):
+        hand_keyboard = make_hand_keyboard(game, players[i], False)
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text=f"Handing out cards to @{player_usernames[i]}", reply_markup=hand_keyboard)
+    return True
 
 def tell_round(update: Update, context: CallbackContext):
     """tells chat what round the game is in
@@ -276,32 +274,40 @@ def new_round(update: Update, context: CallbackContext) -> bool:
     game.new_round()
     hand_out_hands_result = hand_out_hands(update, context)
     lg.debug(f"Hand out hands result: {hand_out_hands_result}")
-    if (hand_out_hands_result):
+    if hand_out_hands_result:
         return True
     else:
         game.reset_round()
         return False
 
 
-def make_hand_keyboard(game: Game, player: int) -> ReplyKeyboardMarkup:  # had page
-    """create hands keyboard
-        creates keyboard containing cards in the hand of one player
+def make_hand_keyboard(game: Game, player: int, can_potentially_draw: bool) -> ReplyKeyboardMarkup:  # had page
+    """Create hands keyboard.
+        Creates keyboard containing cards in the hand of one player.
 
         param:
             game (Game): game class that is responsible for the game's logic
             player (int): payer that keyboard is requested for
+            can_potentially_draw (bool): determine whether a /draw button might be sent or not
         test:
             - check that ReplyMarkup is not empty
             - check number of rows in keybord is > int(len(player.hand)/5)
     """
-    sorted_hand = sorted(game.get_hand(player))
+    sorted_hand = sorted(list(game.get_hand(player))) #TODO: are the cards sorted now?
     hand_str = [str(card) for card in sorted_hand]
     cards_per_row = 5
     # build keyboard rows with 5 cards
     full_row_count = int(len(hand_str) / cards_per_row)
-    keyboard_buttons = [['/turn', '/stack', '/draw']]
+    # Send draw  button only if player it is the players move and he can't move
+    if can_potentially_draw:
+        if game.can_move(player):
+            keyboard_buttons = [['/turn', '/stack']]
+        else:
+            keyboard_buttons = [['/turn', '/stack', '/draw']]
+    else:
+        keyboard_buttons = [['/turn', '/stack']]
     card_index = 0
-    for j in range(full_row_count):  # TODO: can I make this more efficient? Dictionaries?
+    for j in range(full_row_count):
         keyboard_row = []
         for k in range(cards_per_row):
             keyboard_row.append(hand_str[card_index])
@@ -312,12 +318,6 @@ def make_hand_keyboard(game: Game, player: int) -> ReplyKeyboardMarkup:  # had p
     last_row = hand_str[full_row_count * 5:]
     last_row.append("/help")
     keyboard_buttons.append(last_row)
-
-    keyboard = {
-        "keyboard": keyboard_buttons,
-        "resize_keyboard": True,
-        "selective": True
-    }
     return ReplyKeyboardMarkup(keyboard_buttons, resize_keyboard=True, selective=True)
 
 
@@ -358,6 +358,19 @@ def next_turn(context: CallbackContext):
     context.chat_data["turn"] = (context.chat_data["turn"] + 1) % len(context.chat_data['players'])
 
 
+def handle_timeout(update:Update, context:CallbackContext):
+    """Function that handles timeout errors.
+
+    Function that handles timeout errors. Ends the game.
+
+    test:
+        - context.chat_data['game']==0
+        - context.chat_data['players']==[]
+    """
+    context.bot.send_message(chat_id=update.effective_chat.id, text="My bad, had to use the bathroom. Can you say that again!")
+    #end_game(update, context)
+    lg.debug("Timeout Error")
+
 # -- End: Helper functions -- #
 
 
@@ -378,7 +391,7 @@ def tell_turn(update: Update, context: CallbackContext):
     at_turn = context.chat_data['turn']
     player_at_turn = get_username_from_id(update, context, players[at_turn])
     game = context.chat_data['game']
-    hand_keyboard = make_hand_keyboard(game, players[at_turn])
+    hand_keyboard = make_hand_keyboard(game, players[at_turn], True)
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text="It's your turn @" + player_at_turn,
                              reply_markup=hand_keyboard)
@@ -402,7 +415,6 @@ def new_game(update: Update, context: CallbackContext) -> int:
     sender = update.message.from_user.id
     lg.info(f"{get_users_name_from_id(update, context, sender)} created the chat {update.message.chat.title}")
     context.chat_data['players'] = {sender}
-    context.players_left = {}  # TODO delete
     context.chat_data['turn'] = 0
     context.chat_data['game'] = 0
     lg.info(f"Players initialized with {str(context.chat_data['players'])} "
@@ -414,14 +426,14 @@ def new_game(update: Update, context: CallbackContext) -> int:
 
 
 def join(update: Update, context: CallbackContext) -> int or None:
-    """for users wanting to join the game
-        for users wanting to join the game, is needed for registering players when bot was added to existing group
+    """For users wanting to join the game.
+        For users wanting to join the game, is needed for registering players when bot was added to existing group.
         the bot does not have access to the users in a group and must keep track of them internally,
-            this is done by extracting usernames from updates
+            this is done by extracting usernames from updates.
 
         param:
-            update (telegram.Update): represents incoming update - Accordingly in all following functions
-            context (telegram.ext.CallbackContext):  callback called by telegram.ext.Handler, stores information about the bot, the chat and users and more
+            update (telegram.Update): represents incoming update - Accordingly in all following functions.
+            context (telegram.ext.CallbackContext):  callback called by telegram.ext.Handler, stores information about the bot, the chat and users and more.
 
         test:
             - len(context.chat_data['players']) before join is 1 less then after
@@ -489,8 +501,30 @@ def new_player(update: Update, context: CallbackContext) -> int:
     return conversation_states['lobby']
 
 
-# TODO Test player left
-def player_left(update: Update, context: CallbackContext) -> int:
+def player_left_in_game(update:Update, context:CallbackContext):
+    """Removes player that left during the game.
+
+        Removes player that left during the game. If after there are no more registered players, the bot leaves the chat.
+
+        param:
+            update (telegram.Update): represents incoming update - Accordingly in all following functions
+            context (telegram.ext.CallbackContext):  callback called by telegram.ext.Handler, stores information about the bot, the chat and users and more
+
+        test:
+            - if bot left: check that bot cannot send anymore messages to respective chatt
+            - len(context.chat_data['players']) decreased by 1
+    """
+    #
+    lg.debug("A player during the game left")
+    player_left_in_lobby(update, context)
+
+    if len(context.chat_data['players']) < 2:
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text="There are not enough registered players 😔")
+        leave_chat(update, context)
+
+
+def player_left_in_lobby(update: Update, context: CallbackContext) -> int or None :
     """remove player that left the group
         removes user that left the group from game
 
@@ -504,18 +538,18 @@ def player_left(update: Update, context: CallbackContext) -> int:
     """
     lg.debug("A player left")
     left = update.message.left_chat_member.id
-    if context.chat_data['game'] == 'lobby':
-        try:
-            players_before_leaving = get_current_players(update, context)
-            context.chat_data['players'].remove(left)
-            players_after_leaving = get_current_players(update, context)
-            lg.info(f"successfully removed {players_before_leaving.difference(players_after_leaving)}")
-            return conversation_states['lobby']
+    try:
+        players_before_leaving = get_current_players(update, context)
+        context.chat_data['players'].remove(left)
+        players_after_leaving = get_current_players(update, context)
+        lg.info(f"successfully removed {players_before_leaving.difference(players_after_leaving)}")
 
-        except:  # TODO what error is this?
-            lg.info("a not registered chat member left the group")
-            return conversation_states['lobby']
-
+    except:  # TODO what error is this?
+        lg.info("a not registered chat member left the group")
+    if context.chat_data['game'] == 0:
+        return conversation_states['lobby']
+    else:
+        return None
 
 def start_game(update: Update, context: CallbackContext) -> int:
     """begin game
@@ -600,7 +634,7 @@ def choose_suit(update: Update, context: CallbackContext) -> int:
 
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  text=f"@{get_username_from_id(update, context, player)} chose suit {game.last_eights_suit}. The next card must match this suit.",
-                                 reply_markup=make_hand_keyboard(game, player))
+                                 reply_markup=make_hand_keyboard(game, player, False))
         next_turn(context)
         tell_turn(update, context)
         return conversation_states['play']
@@ -708,14 +742,21 @@ def draw_card(update, context):
 
     if player == players[at_turn]:
         lg.debug("Player tried to draw a card on right turn")
-        game.draw(player)
-        hand_keyboard = make_hand_keyboard(game, players[at_turn])
-        context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text=f"@{get_username_from_id(update, context, player)} drew a card",
-                                 reply_markup=hand_keyboard)
-        tell_top_of_stack(update, context)
-        next_turn(context)
-        tell_turn(update, context)
+        if not game.can_move(player):
+            game.draw(player)
+            hand_keyboard = make_hand_keyboard(game, players[at_turn], False)
+            context.bot.send_message(chat_id=update.effective_chat.id,
+                                     text=f"@{get_username_from_id(update, context, player)} drew a card",
+                                     reply_markup=hand_keyboard)
+            tell_top_of_stack(update, context)
+            next_turn(context)
+            tell_turn(update, context)
+        else:
+            hand_keyboard = make_hand_keyboard(game, players[at_turn], False)
+            context.bot.send_message(chat_id=update.effective_chat.id,
+                                     text=f"I'm sorry @{get_username_from_id(update, context, player)} you can't draw "
+                                          f"cards if you can play cards. Please play a card.",
+                                     reply_markup=hand_keyboard)
     else:
         context.bot.send_message(chat_id=update.effective_chat.id, text=messages['wrong_turn'])
         lg.debug("Player tried to draw card on wrong turn")
@@ -739,7 +780,7 @@ def tell_top_of_stack(update: Update, context: CallbackContext):
     player_that_made_move = list(context.chat_data['players'])[context.chat_data['turn']]
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text=f"{card_on_stack} is on the stack",
-                             reply_markup=make_hand_keyboard(game, player_that_made_move))
+                             reply_markup=make_hand_keyboard(game, player_that_made_move, False))
     return conversation_states['play']
 
 
@@ -808,8 +849,11 @@ def bot_help(update: Update, context: CallbackContext):
             - "/" in update.message.text
             - type(update.message.text) == str
     """
-    context.bot.send_message(chat_id=update.effective_chat.id, text=messages["commands"])
+    try:
+        context.bot.send_message(chat_id=update.effective_chat.id, text=messages["commands"])
+    except TimedOut:
 
+        handle_timeout(update, context)
 
 def score(update: Update, context: CallbackContext):
     """sends current store
@@ -823,16 +867,53 @@ def score(update: Update, context: CallbackContext):
             - "/" in update.message.text
             - type(update.message.text) == str
     """
-    game = context.chat_data['game']
-    players = context.chat_data['players']
-    scores = [["Pts.", "Player"]]
-    for player in players:
-        p_score = [game.scores[player], get_username_from_id(update, context, player)]
-        scores.append(p_score)
-    context.bot.send_message(chat_id=update.effective_chat.id,
-                             text=tabulate(scores))
+    try:
+        game = context.chat_data['game']
+        players = context.chat_data['players']
+        scores = [["Pts.", "Player"]]
+        for player in players:
+            p_score = [game.scores[player], get_username_from_id(update, context, player)]
+            scores.append(p_score)
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text=tabulate(scores))
+    except TimedOut:
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text="I had an issue, could you ask for the /score again?")
     return conversation_states['play']
 
+
+def send_hand(update: Update, context:CallbackContext):
+    """Give player hands keyboard.
+
+    Give player hands keyboard. Is useful since the keyboards are are tied to messages from the bot.
+    Meaning the serve as a reply blue print. However, if a player tries to respond to another message in the chat,
+    it can be hard to find the bot's message that has the player's hands keyboard (reply blue print)
+
+    param:
+        update (telegram.Update): represents incoming update - Accordingly in all following functions
+        context (telegram.ext.CallbackContext):  callback called by telegram.ext.Handler, stores information about the bot, the chat and users and more
+
+    test:
+        - type(hand_keybard) == ReplyMarkup
+        - player_requesting_hand != None
+    """
+    try:
+        player_requesting_hand = update.message.from_user.id
+        at_turn = context.chat_data['turn']
+        players = context.chat_data['players']
+        if player_requesting_hand == players[at_turn]:
+            can_potentially_draw = True
+        else:
+            can_potentially_draw = False
+        hand_keyboard = make_hand_keyboard(context.chat_data['game'], player_requesting_hand, can_potentially_draw)
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text=f"Here is your hand @{get_username_from_id(update, context, player_requesting_hand)}",
+                                 reply_markup=hand_keyboard)
+    except ValueError:
+        pass
+    except TimedOut:
+        handle_timeout(update, context)
+    return conversation_states['play']
 
 # -- End: Command callback functions -- #
 
@@ -848,7 +929,7 @@ entry_point = [MessageHandler(Filters.status_update.chat_created, new_game),
 # states conversation can be in an available Message/CommandHandlers
 states = {
     conversation_states['lobby']: [MessageHandler(Filters.status_update.new_chat_members, new_player),
-                                   MessageHandler(Filters.status_update.left_chat_member, player_left),
+                                   MessageHandler(Filters.status_update.left_chat_member, player_left_in_lobby),
                                    CommandHandler('play', start_game),
                                    CommandHandler('help', bot_help),
                                    CommandHandler('rules', rules),
@@ -857,6 +938,7 @@ states = {
     conversation_states['play']: [
                                     MessageHandler(Filters.text & Filters.regex('([♠♥♣♦]|[♠️♣️♥️♦️])((2|3|4|5|6|7|8|9|10|11|12)|[JQKA])'),
                                                    play_card),
+                                    MessageHandler(Filters.status_update.left_chat_member, player_left_in_game),
                                     CommandHandler('draw', draw_card),
                                     CommandHandler('stack', tell_top_of_stack),
                                     CommandHandler('help', bot_help),
@@ -864,7 +946,8 @@ states = {
                                     CommandHandler('ruleslong', rules_long),
                                     CommandHandler('score', score),
                                     CommandHandler('endgame', user_end_game),
-                                    CommandHandler('turn', tell_turn)],
+                                    CommandHandler('turn', tell_turn),
+                                    CommandHandler('hand', send_hand)],
     conversation_states['choose_suit']: [
         MessageHandler(Filters.text & Filters.regex('([♠♥♣♦]|[♠️♣️♥️♦️])'), choose_suit)]
 }
@@ -876,6 +959,7 @@ navigation = ConversationHandler(entry_point,
                                  name="navigation",
                                  per_user=False)
 # -- End: Handlers -- #
+
 
 def main():
     """main function
@@ -892,8 +976,11 @@ def main():
     dispatcher.add_handler(navigation)
     dispatcher.add_handler(unknown_command_handler)
 
+
     # start looking for chat updates
     updater.start_polling()
+
+
 
 
 if __name__ == "__main__":

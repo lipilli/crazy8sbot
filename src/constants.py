@@ -21,16 +21,13 @@ suits = "♠♥♣♦"
 # suits = "shcd" # used for debugging. switch with line on top for release
 
 hand_filler = "."
+# Testing ---
+TEST_B0T_TOKEN = "1796005782:AAH50veupoTsA4KbrKv9A7ZndiO0CCewa9g"
 
 # Bot constants
 
-BOT_TOKEN = "1665894053:AAHxd8VUNhV1Q8ncLrF9IvljRPcGG9zfH60"
+BOT_TOKEN = TEST_B0T_TOKEN
 
-# Testing ---
-TESTB0T_TOKEN1 = "1796005782:AAH50veupoTsA4KbrKv9A7ZndiO0CCewa9g"
-TESTBOT_TOKEN2 = "1792398859:AAGoeCc9y2GX3MsUaHPRd0f2I9_lLxTUFgA"
-TESTBOT_TOKEN3 = "1897111191:AAFvK3sB-9bdd-alOPWaWYTzzWKp5sGGy4w"
-TESTBOT_TOKEN4 = "1879219956:AAH5bpXKl1yxyCEwsZ953sS5mc4DO9RHGbw"
 
 
 keyboards = {
@@ -66,9 +63,10 @@ messages = {
     To begin add 1-4 players to the group then press play.
     Players that are already in the group can also type /join. 
     """,
-    'rules': """Here are the rules:\n- Cards you play must match the color or number of the card on the deck\n- The 8s are crazy!:
-        Play it at anytime and define a new color. 
-        The next player must play an 8 or a card of the same color\n- You must make a move at every turn\n- You can choose to draw a card at every turn\n- If there is no card on the deck\n- If the deck is empty and you can't play you are passed""",
+    'rules': f"Here are the rules:\n- Cards you play must match the color or number of the card on the deck\n- The 8s "
+             f"are crazy!:Play it at anytime and define a new color. The next player must play an 8 or a card of the "
+             f"same color\n- You must make a move at every turn\n- If cou cannot play a card on your turn you must "
+             f"draw one\n- If there is no card on the deck\n- If the deck is empty and you can't play you are passed",
 
     'rules_long': """Crazy 8s:
     General:
@@ -92,11 +90,13 @@ messages = {
     - Every card (other than eight) you play must match the suit or denomination of the card on the deck
     - The eights are crazy! Play it at anytime and define a new suit. The next player must play an eight or a card of matching suit
     - You must make a move at every turn
-    - You can choose to draw a card at every turn
+    - If you can't play a card at your turn, you must draw one
     - If there is no card on the deck
     - If the deck is empty and you can't play you are passed
     """,
     'game_begin': """Alrighty, let's play a game of crazy 8s! 😁\n""",
-    'commands': "/play: start a new game\n/rules: short version of the game rules\n/ruleslong: long version of the game rules\n/score: current score\n/endgame: ends the game for all (admin only)\n/stack: card on top of the card stack\n/join: join game before pressing play\n/help: list of available commands",
+    'commands': "/play: start a new game\n/rules: short version of the game rules\n/ruleslong: long version of the "
+                "game rules\n/score: current score\n/newgame: start a new game\n/endgame: ends the game for all (admin only)\n/stack: card on top "
+                "of the card stack\n/join: join game before pressing play\n/help: list of available commands\n/hand: gives you your current hand keyboard",
     'wrong_turn': "I'm sorry but it's not your turn 😕"
 }

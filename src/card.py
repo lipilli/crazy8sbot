@@ -8,8 +8,7 @@ Card class used for playing crazy eights in Telegram chat.
 """
 from __future__ import annotations
 import logging as lg
-import constants
-
+from constants import suits
 
 # setup logging
 # source: https://github.com/python-telegram-bot/python-telegram-bot/wiki/Extensions-%E2%80%93-Your-first-Bot
@@ -30,9 +29,8 @@ class Card:
         - card.suit != None
     """
 
-    def __init__(self, representation:str or int): # TODO: Look over this and check if you truely understood it
+    def __init__(self, representation: str or int):
         """ Initializes a Card.
-        TODO: How does the sorting work? Because When I put the cards in the persons hands, they are shuffeled
 
         Initializes a Card.
         A Card can be initialized with a string or int but is finally stored as an int:
@@ -58,10 +56,10 @@ class Card:
             lg.debug(f"Processing card with suit_str={suit_str} and rank_str={rank_str}")
 
             # turning suit ("♣") into an integer
-            suit_int = constants.suits.find(suit_str)
+            suit_int = suits.find(suit_str)
             if suit_int == -1:
                 raise ValueError("Card string must start with one of [♠♥♣♦]")
-            
+
             # turning rank ("10") into an integer
             try:
                 rank_int = int(rank_str)
@@ -78,7 +76,7 @@ class Card:
                 elif rank_str == "A":
                     rank_int = 1
                 else:
-                    raise ValueError(("Invalid rank"))
+                    raise ValueError("Invalid rank")
 
             self.int_representation = (rank_int - 1) * 4 + suit_int
 
@@ -86,10 +84,10 @@ class Card:
             raise ValueError("Value must be str or int")
 
         # check for ValueErrors
-        if not 0 <= self.int_representation < 52: # TODO: this can go up
+        if not 0 <= self.int_representation < 52:
             raise ValueError("Invalid card name")
 
-    def __str__(self)->str:
+    def __str__(self) -> str:
         """Get the string representation of a card.
 
         Get the string representation of a card.
@@ -99,8 +97,7 @@ class Card:
             - len(return) == 2
             - return[0] in constants.suits
         """
-        """string representation of card. See constructor."""
-        suit = self.suit # TODO: in property umwandeln! @Cedric Was meinst damit?
+        suit = self.suit
         rank = self.rank
 
         if rank == 11:
@@ -114,7 +111,7 @@ class Card:
 
         return f"{suit}{rank}"
 
-    def __int__(self)->int:
+    def __int__(self) -> int:
         """Get the int representation of a card.
 
         Get the int representation of a card.
@@ -124,10 +121,21 @@ class Card:
             - return < 53
             - return > -1
         """
-        """int representation of card. See constructor."""
         return self.int_representation
 
-    def __eq__(self, other:'Card')->bool:
+    def __hash__(self) -> int:
+        """Get the has of a card.
+
+        Get the hash of a card. Needed to handle cards in a set.
+
+        test:
+            - return type == int
+            - return < 53
+            - return > -1
+        """
+        return self.int_representation
+
+    def __eq__(self, other: 'Card') -> bool:
         """ Compare this card to another card.
 
         Compare this card to another card.
@@ -145,10 +153,7 @@ class Card:
         """
         return self.int_representation == other.int_representation
 
-    def __hash__(self): #TODO @cedric: gibt es einen Unterschied zu __int__?
-        return self.int_representation
-    
-    def __lt__(self, other:'Card')->bool:
+    def __lt__(self, other: 'Card') -> bool:
         """ Less than implementation.
 
         Implementation of the less than function. Used for sorting cards with sorted([card1, card2, card3])
@@ -162,22 +167,22 @@ class Card:
         source: https://stackoverflow.com/questions/42845972/typed-python-using-the-classes-own-type-inside-class-definition
         """
         return int(self) < int(other)
-    
+
     @property
-    def suit(self)->str:
+    def suit(self) -> str:
         """ Get suit of a Card.
 
-        Get suit of a card. The suits are defined in constants.rank.
+        Get suit of a card. The suits are defined in constants.suits.
 
         test:
             - type(self.int_representation) == int
             - self.int_representation != None
             - type(return) == str
         """
-        return constants.suits[self.int_representation % 4]
+        return suits[self.int_representation % 4]
 
     @property
-    def __rank(self) -> int: #TODO does the underscore impair the function of this property? ?
+    def rank(self) -> int:
         """Get the rank of a Card.
 
         Get the rank of a Card as int. A will be 1, J 11, K 12, Q 13.
@@ -188,7 +193,7 @@ class Card:
             - type(return) == str
         """
         return int((self.int_representation - self.int_representation % 4) / 4 + 1)
-        # return int((self.value - self.value % 4) / 4 + 2) #TODO @Cedric, do you remember if this has any meaning?
+
 
     def get_score(self):
         """Get the value of a card.

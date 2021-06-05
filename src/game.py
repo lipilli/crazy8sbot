@@ -7,7 +7,7 @@ Game class used for playing crazy eights in Telegram chat.
         license: free
 """
 
-import random
+from random import seed, shuffle, randint
 import logging as lg
 from card import Card
 from constants import MoveOutcome
@@ -59,7 +59,7 @@ class Game:
                 - type(round) == int
                 - round > 0
         """
-        if round > 1:
+        if self.round > 1:
             self.round -= 1
 
     def new_round(self):
@@ -75,9 +75,9 @@ class Game:
                 - round before < round after
         """
 
-        self.deck = [Card(value) for value in range(52)]  # TODO: generalize this to new_round
-        random.seed()
-        random.shuffle(self.deck)
+        self.deck = [Card(value) for value in range(52)]
+        seed()
+        shuffle(self.deck)
         self.stack = [self.deck.pop()]
         self.round_over = False
         self.round += 1
@@ -87,8 +87,8 @@ class Game:
             lg.debug("An 8 was on top of initial deck")
             old_top = self.top_of_stack
             self.stack.remove(old_top)
-            random.seed()
-            self.deck.insert(random.randint(0, len(self.deck) - 1), old_top)
+            seed()
+            self.deck.insert(randint(0, len(self.deck) - 1), old_top)
             self.stack.append(self.deck.pop())
 
         lg.debug(f"the stack is:{[str(card) for card in self.stack]}")
@@ -105,7 +105,7 @@ class Game:
             lg.debug(f"dealt {[str(card) for card in hand]} to {player}")
 
     @property
-    def leading_player(self)->int:
+    def leading_player(self) -> int:
         """ Returns leading player.
 
         Returns player that is leading at the moment (player with most points)
@@ -125,7 +125,7 @@ class Game:
 
         return _leading_player
 
-    def move(self, player:int, card:Card)->MoveOutcome:
+    def move(self, player: int, card: Card) -> MoveOutcome:
         """Attempts to put a card a player provided to the stack.
 
         Attempts to put a card that a player provided to the card stack. This card might not be part of his hand,
@@ -142,7 +142,7 @@ class Game:
 
         if self.round_over:
             raise Exception(
-                "Invalid move. New round hasn't started yet.")  # TODO: This could also be another MoveOutcome
+                "Invalid move. New round hasn't started yet.")
 
         hand = self.hands[player]
 
@@ -196,7 +196,7 @@ class Game:
 
             return MoveOutcome.invalid_move
 
-    def get_hand(self, player:int)->int:
+    def get_hand(self, player: int) -> set:
         """Returns players hand
 
         Returns the hand of a player
@@ -210,11 +210,11 @@ class Game:
         """
         return self.hands[player]
 
-    def get_hand_score(self, player:int):
+    def get_hand_score(self, player: int):
         return sum([card.get_score() for card in self.hands[player]])
 
     @property
-    def top_of_stack(self)->Card:
+    def top_of_stack(self) -> Card:
         """Returns card on top of the stack
 
         Returns card on top of the card stack.
@@ -225,7 +225,7 @@ class Game:
         """
         return self.stack[-1]
 
-    def draw(self, player:int)->bool:
+    def draw(self, player: int) -> bool:
         """ Attempts drawing a card into the hand of the specified player
 
         Attempts to draw a card from the deck and put it in the hand of the specified player.
@@ -252,7 +252,7 @@ class Game:
             lg.debug(f"the stack is:{[str(card) for card in self.stack]}")
             return False
 
-    def __can_move(self, player:int )->bool:
+    def can_move(self, player: int) -> bool:
         """Determines if a player can make a valid move
 
             Determines if the  specified player can make a valid move.
@@ -295,7 +295,7 @@ class Game:
         else:
             raise ValueError("Invalid suit")
 
-    def __valid_move(self, card_played:Card, card_on_stack:Card) -> bool:
+    def valid_move(self, card_played: Card, card_on_stack: Card) -> bool:
         """Determines if a move is valid.
 
         Determines if a move is valid.
